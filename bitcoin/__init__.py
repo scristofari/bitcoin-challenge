@@ -22,9 +22,22 @@ def get_current_spot():
 
 def history():
     import gdax
+    import pandas as pd
+    from datetime import datetime
     public_client = gdax.PublicClient()
     rates = public_client.get_product_historic_rates('BTC-USD', granularity=60)
-    print(rates)
+    rates.reverse()
+
+    df = pd.DataFrame(rates)
+
+    def human(timestamp):
+        date = datetime.fromtimestamp(timestamp)
+        return date.strftime('%Y-%m-%d %H:%M:%S')
+
+    df[6] = df.apply(lambda row: human(row[0]), axis=1)
+    df.to_csv('prices.csv', encoding='utf-8', mode='w+',
+              header=('time', 'low', 'high', 'open', 'close', 'volume', 'date'))
+
 
 def insert_amount(price):
     conn = sqlite3.connect('btc_challenge.db')
@@ -64,7 +77,7 @@ def train():
 
     prices = pd.read_csv('prices.csv')
     X = np.arange(len(prices)).reshape(-1, 1)
-    y = np.array(prices['amount'])
+    y = np.array(prices['close'])
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
     tree_reg = DecisionTreeRegressor(max_depth=3)

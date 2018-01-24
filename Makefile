@@ -10,7 +10,7 @@ train:
 create_dataset:
 	venv/bin/python main.py create_dataset
 
-predict: create_dataset train
+predict: history2 train
 
 init:
 	venv/bin/pip install -r requirements.txt
