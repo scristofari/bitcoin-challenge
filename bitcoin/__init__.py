@@ -20,27 +20,32 @@ def get_current_spot():
     return price['data']
 
 
-def history():
+def history(granularity=300):
     import gdax
     import pandas as pd
     from datetime import datetime
     public_client = gdax.PublicClient()
-    rates = public_client.get_product_historic_rates('BTC-USD', granularity=300)
+    rates = public_client.get_product_historic_rates('BTC-USD', granularity)
     rates.reverse()
 
     df = pd.DataFrame(rates)
+    df.columns = ['time', 'low', 'high', 'open', 'close', 'volume']
 
     def human(timestamp):
         date = datetime.fromtimestamp(timestamp)
         return date.strftime('%Y-%m-%d %H:%M:%S')
-    df[6] = df.apply(lambda row: human(row[0]), axis=1)
+
+    df['date'] = df.apply(lambda row: human(row['time']), axis=1)
 
     def percent(op, close):
         return ((float(close) - op) / op) * 100
-    df[7] = df.apply(lambda row: percent(row[3], row[4]), axis=1)
+
+    df['percent'] = df.apply(lambda row: percent(row['open'], row['close']), axis=1)
 
     df.to_csv('prices.csv', encoding='utf-8', mode='w+',
               header=('time', 'low', 'high', 'open', 'close', 'volume', 'date', 'percent'))
+
+    return df
 
 
 def insert_amount(price):
