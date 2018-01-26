@@ -25,7 +25,7 @@ def history():
     import pandas as pd
     from datetime import datetime
     public_client = gdax.PublicClient()
-    rates = public_client.get_product_historic_rates('BTC-USD', granularity=60)
+    rates = public_client.get_product_historic_rates('BTC-USD', granularity=300)
     rates.reverse()
 
     df = pd.DataFrame(rates)
