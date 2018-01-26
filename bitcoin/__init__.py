@@ -33,10 +33,14 @@ def history():
     def human(timestamp):
         date = datetime.fromtimestamp(timestamp)
         return date.strftime('%Y-%m-%d %H:%M:%S')
-
     df[6] = df.apply(lambda row: human(row[0]), axis=1)
+
+    def percent(op, close):
+        return ((float(close) - op) / op) * 100
+    df[7] = df.apply(lambda row: percent(row[3], row[4]), axis=1)
+
     df.to_csv('prices.csv', encoding='utf-8', mode='w+',
-              header=('time', 'low', 'high', 'open', 'close', 'volume', 'date'))
+              header=('time', 'low', 'high', 'open', 'close', 'volume', 'date', 'percent'))
 
 
 def insert_amount(price):
