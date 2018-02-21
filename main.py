@@ -20,5 +20,6 @@ class BitCoinChallenge(cmd.Cmd):
     def do_history2(self, arg):
         bitcoin.history()
 
+
 if __name__ == '__main__':
     BitCoinChallenge().onecmd(' '.join(sys.argv[1:]))

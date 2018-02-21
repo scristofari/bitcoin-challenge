@@ -25,7 +25,7 @@ def history(granularity=300):
     import pandas as pd
     from datetime import datetime
     public_client = gdax.PublicClient()
-    rates = public_client.get_product_historic_rates('BTC-USD', granularity)
+    rates = public_client.get_product_historic_rates(product_id='BTC-USD', granularity=granularity)
     rates.reverse()
 
     df = pd.DataFrame(rates)
@@ -35,15 +35,15 @@ def history(granularity=300):
         date = datetime.fromtimestamp(timestamp)
         return date.strftime('%Y-%m-%d %H:%M:%S')
 
-    df['date'] = df.apply(lambda row: human(row['time']), axis=1)
+    #df['date'] = df.apply(lambda row: human(row['time']), axis=1)
 
     def percent(op, close):
         return ((float(close) - op) / op) * 100
 
     df['percent'] = df.apply(lambda row: percent(row['open'], row['close']), axis=1)
 
-    df.to_csv('prices.csv', encoding='utf-8', mode='w+',
-              header=('time', 'low', 'high', 'open', 'close', 'volume', 'date', 'percent'))
+    #df.to_csv('prices.csv', encoding='utf-8', mode='w+',
+    #          header=('time', 'low', 'high', 'open', 'close', 'volume', 'percent'))
 
     return df
 
