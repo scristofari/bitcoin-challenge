@@ -17,7 +17,7 @@ def twitter_sentiment():
     tweets = twitter_api.search(q=['bitcoin, price, crypto, blockchain'], count=100)
     df = pd.DataFrame(columns=['followers', 'polarity'])
     for tweet in tweets:
-        pol, _ = TextBlob(tweet.text).sentiment
+        pol = TextBlob(tweet.text).sentiment.polarity
 
         # @todo Look at this
         if pol != 0:
