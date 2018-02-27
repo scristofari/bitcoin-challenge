@@ -1,11 +1,13 @@
 import cmd
 import sys
-from bitcoin import twitter, rates
+from bitcoin import twitter, rates, db
 
 
 class BitCoinChallenge(cmd.Cmd):
-    def do_spot(self, arg):
+    def do_init(self, arg):
+        db.create_db()
 
+    def do_spot(self, arg):
         rate = rates.last_rate()
         twitter_average = twitter.twitter_sentiment()
 

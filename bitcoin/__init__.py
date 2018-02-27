@@ -1,33 +1,3 @@
-import sqlite3
-import time
-import csv
-
-
-def insert_amount(price):
-    conn = sqlite3.connect('btc_challenge.db')
-    c = conn.cursor()
-
-    c.execute('''CREATE TABLE IF NOT EXISTS btc_challenge (pid INTEGER PRIMARY KEY, amount REAL, timestamp INTEGER)''')
-    c.execute("INSERT INTO btc_challenge (amount, timestamp) VALUES (?, ?)", (float(price['amount']), int(time.time())))
-
-    conn.commit()
-
-    conn.close()
-
-
-def create_dataset():
-    conn = sqlite3.connect('btc_challenge.db')
-    c = conn.cursor()
-    c.execute("SELECT * FROM btc_challenge ORDER BY pid DESC LIMIT 180")
-    rows = c.fetchall()
-    conn.close()
-
-    with open('prices.csv', 'w+') as f:
-        writer = csv.writer(f)
-        writer.writerow(('pid', 'amount', 'timestamp'))
-        writer.writerows(rows)
-
-
 def predict():
     pass
 
