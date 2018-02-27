@@ -10,7 +10,7 @@ import csv
 
 def get_current_spot():
     headers = {'CB-VERSION': '2017-12-31'}
-    r = requests.get('https://api.coinbase.com/v2/prices/%s/spot' % 'BTC-USD', headers=headers)
+    r = requests.get('https://api.coinbase.com/v2/prices/%s/spot' % 'BTC-EUR', headers=headers)
     if r.status_code != 200:
         print('ERR: Failed to get current spot')
         exit(1)
@@ -20,10 +20,16 @@ def get_current_spot():
     return price['data']
 
 
-def history(granularity=300):
+def history(granularity=60):
+    """
+    Return the historical data
+
+    :param granularity: in seconds
+    :return:
+    """
     import gdax
     import pandas as pd
-    from datetime import datetime
+    # from datetime import datetime
     public_client = gdax.PublicClient()
     rates = public_client.get_product_historic_rates(product_id='BTC-USD', granularity=granularity)
     rates.reverse()
@@ -31,9 +37,9 @@ def history(granularity=300):
     df = pd.DataFrame(rates)
     df.columns = ['time', 'low', 'high', 'open', 'close', 'volume']
 
-    def human(timestamp):
-        date = datetime.fromtimestamp(timestamp)
-        return date.strftime('%Y-%m-%d %H:%M:%S')
+    # def human(timestamp):
+    #    date = datetime.fromtimestamp(timestamp)
+    #    return date.strftime('%Y-%m-%d %H:%M:%S')
 
     # df['date'] = df.apply(lambda row: human(row['time']), axis=1)
 

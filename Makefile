@@ -1,8 +1,8 @@
+spot:
+	venv/bin/python main.py spot
+
 history:
 	venv/bin/python main.py history
-
-history2:
-	venv/bin/python main.py history2
 
 train:
 	venv/bin/python main.py train
@@ -10,7 +10,7 @@ train:
 create_dataset:
 	venv/bin/python main.py create_dataset
 
-predict: history2 train
+predict: history train
 
 init:
-	venv/bin/pip install -r requirements.txt
+	venv/bin/pip install -r requirements.txt --upgrade

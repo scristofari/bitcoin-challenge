@@ -5,7 +5,7 @@ from bitcoin import twitter
 
 
 class BitCoinChallenge(cmd.Cmd):
-    def do_history(self, arg):
+    def do_spot(self, arg):
         price = bitcoin.get_current_spot()
         twitter_average = twitter.twitter_sentiment()
 
