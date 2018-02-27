@@ -1,12 +1,16 @@
 import cmd
 import sys
 import bitcoin
+from bitcoin import twitter
 
 
 class BitCoinChallenge(cmd.Cmd):
     def do_history(self, arg):
         price = bitcoin.get_current_spot()
-        bitcoin.insert_amount(price)
+        twitter_average = twitter.twitter_sentiment()
+
+        print(twitter_average)
+        print(price)
 
     def do_create_dataset(self, arg):
         bitcoin.create_dataset()

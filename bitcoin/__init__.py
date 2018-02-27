@@ -35,14 +35,14 @@ def history(granularity=300):
         date = datetime.fromtimestamp(timestamp)
         return date.strftime('%Y-%m-%d %H:%M:%S')
 
-    #df['date'] = df.apply(lambda row: human(row['time']), axis=1)
+    # df['date'] = df.apply(lambda row: human(row['time']), axis=1)
 
     def percent(op, close):
         return ((float(close) - op) / op) * 100
 
     df['percent'] = df.apply(lambda row: percent(row['open'], row['close']), axis=1)
 
-    #df.to_csv('prices.csv', encoding='utf-8', mode='w+',
+    # df.to_csv('prices.csv', encoding='utf-8', mode='w+',
     #          header=('time', 'low', 'high', 'open', 'close', 'volume', 'percent'))
 
     return df
