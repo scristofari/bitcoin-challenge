@@ -1,57 +1,6 @@
-# from coinbase.wallet.client import Client
-# client = Client(api_key='o1IFREMtdXCXVXBM', api_secret='qqLBoRG0kpIZT4TeTp2lv0aL3AQvZf5f', api_version='2017-12-31')
-# price = client.get_spot_price(currency_pair='BTC-USD')
-import requests
-import json
 import sqlite3
 import time
 import csv
-
-
-def get_current_spot():
-    headers = {'CB-VERSION': '2017-12-31'}
-    r = requests.get('https://api.coinbase.com/v2/prices/%s/spot' % 'BTC-EUR', headers=headers)
-    if r.status_code != 200:
-        print('ERR: Failed to get current spot')
-        exit(1)
-
-    price = json.loads(r.text)
-    print("Currency : %s => %s %s" % (price['data']['base'], price['data']['amount'], price['data']['currency']))
-    return price['data']
-
-
-def history(granularity=60):
-    """
-    Return the historical data
-
-    :param granularity: in seconds
-    :return:
-    """
-    import gdax
-    import pandas as pd
-    # from datetime import datetime
-    public_client = gdax.PublicClient()
-    rates = public_client.get_product_historic_rates(product_id='BTC-USD', granularity=granularity)
-    rates.reverse()
-
-    df = pd.DataFrame(rates)
-    df.columns = ['time', 'low', 'high', 'open', 'close', 'volume']
-
-    # def human(timestamp):
-    #    date = datetime.fromtimestamp(timestamp)
-    #    return date.strftime('%Y-%m-%d %H:%M:%S')
-
-    # df['date'] = df.apply(lambda row: human(row['time']), axis=1)
-
-    def percent(op, close):
-        return ((float(close) - op) / op) * 100
-
-    df['percent'] = df.apply(lambda row: percent(row['open'], row['close']), axis=1)
-
-    # df.to_csv('prices.csv', encoding='utf-8', mode='w+',
-    #          header=('time', 'low', 'high', 'open', 'close', 'volume', 'percent'))
-
-    return df
 
 
 def insert_amount(price):
