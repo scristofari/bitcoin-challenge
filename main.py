@@ -5,9 +5,6 @@ from bitcoin import twitter, rates, db
 
 
 class BitCoinChallenge(cmd.Cmd):
-    def do_init(self, arg):
-        db.create_db()
-
     def do_spot(self, arg):
         rate = rates.last_rate()
         sentiment = twitter.twitter_sentiment()
