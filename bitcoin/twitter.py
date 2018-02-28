@@ -15,6 +15,11 @@ def clean_tweet(tweet):
 
 
 def twitter_sentiment():
+    """
+    Returns the sentiment
+
+    :return:
+    """
     auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_token, access_token_secret)
     twitter_api = tweepy.API(auth)
@@ -28,7 +33,6 @@ def twitter_sentiment():
             'polarity': pol
         }, ignore_index=True)
 
-    av = np.average(df['polarity'].values, weights=df['followers'].values)
-    print("Average polarity %f" % av)
-
-    return av
+    average = np.average(df['polarity'].values, weights=df['followers'].values)
+    followers_sum = df['followers'].sum()
+    return [average, followers_sum]
