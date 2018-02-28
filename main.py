@@ -11,7 +11,8 @@ class BitCoinChallenge(cmd.Cmd):
     def do_spot(self, arg):
         rate = rates.last_rate()
         sentiment = twitter.twitter_sentiment()
-        with open('data.csv', 'w', newline='') as file:
+        # rate / sentiment.
+        with open('data.csv', newline='', encoding='utf-8', mode='a') as file:
             writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
             writer.writerow(rate + sentiment)
 
