@@ -1,6 +1,1 @@
-.idea/
-venv/
-.ipynb_checkpoints/
-.pyc
-.pyo
-__pycache__/
+data.csv
