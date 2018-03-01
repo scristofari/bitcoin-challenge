@@ -7,4 +7,6 @@ COPY . /src
 
 RUN pip install --upgrade setuptools
 RUN pip install -r requirements.txt --upgrade
+RUN python -m textblob.download_corpora
+
 CMD python main.py spot

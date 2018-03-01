@@ -1,3 +1,5 @@
-spot:
-	python main.py spot
+build:
+	docker build -t bitcoin-challenge .
 
+run:
+	docker run --rm  -v "$PWD":/src
