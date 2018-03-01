@@ -1,6 +1,6 @@
-FROM python:3-alpine
+FROM python:3-slim-stretch
 
-RUN apk --no-cache update && apk add bash curl gcc g++ freetype-dev libpng-dev
+RUN apt-get update -y && apt-get upgrade -y
 
 WORKDIR /src
 COPY . /src
