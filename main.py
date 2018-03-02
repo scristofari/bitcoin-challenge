@@ -10,8 +10,6 @@ class BitCoinChallenge(cmd.Cmd):
         rate = rates.last_rate()
         twitter_sentiment = twitter.get_sentiment()
         # rate / twitter / reddit
-        print(reddit_sentiment)
-        print(rate + twitter_sentiment + reddit_sentiment)
         with open('data.csv', newline='', encoding='utf-8', mode='a') as file:
             writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
             writer.writerow(rate + twitter_sentiment + reddit_sentiment)
