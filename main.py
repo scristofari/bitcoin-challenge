@@ -1,7 +1,7 @@
 import cmd
 import sys
 import csv
-from bitcoin import twitter, rates, db, reddit
+from bitcoin import twitter, rates, reddit
 
 
 class BitCoinChallenge(cmd.Cmd):
