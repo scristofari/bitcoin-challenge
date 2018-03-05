@@ -1,3 +1,12 @@
+from enum import Enum
+
+
+class Order(Enum):
+    STAY = 1
+    DOWN = 2
+    UP = 3
+
+
 def generate_spot_data():
     import csv
     from . import twitter, rates, reddit, gnews
@@ -23,12 +32,25 @@ def load_data(procduct_id):
     return df
 
 
-def train(df):
-    import numpy as np
-
+def prepare(df):
     from sklearn.preprocessing import MinMaxScaler
     from sklearn.model_selection import train_test_split
 
+    X = df[['open', 'reddit_sentiment', 'tw_sentiment', 'tw_followers', 'google_sentiment']]
+    y = df['close'].values.reshape(-1, 1)
+
+    scaler_x = MinMaxScaler(feature_range=(0, 1))
+    scaler_y = MinMaxScaler(feature_range=(0, 1))
+    X_scale = scaler_x.fit_transform(X)
+    y_scale = scaler_y.fit_transform(y)
+
+    X_train, X_test, y_train, y_test = train_test_split(X_scale, y_scale, test_size=0.3, shuffle=False)
+
+    return X_train, X_test, y_train, y_test, scaler_x, scaler_y
+
+
+def train(X_train, X_test, y_train, y_test):
+    import numpy as np
     from keras import regularizers
     from keras.models import Sequential
     from keras.layers import Dense
@@ -36,20 +58,10 @@ def train(df):
     from keras.layers import Activation
     from keras.layers import Dropout
 
-    X = df[['open', 'reddit_sentiment', 'tw_sentiment', 'tw_followers', 'google_sentiment']]
-    y = df['close'].values.reshape(-1, 1)
-
-    scalerX = MinMaxScaler(feature_range=(0, 1))
-    scalerY = MinMaxScaler(feature_range=(0, 1))
-    X_scale = scalerX.fit_transform(X)
-    y_scale = scalerY.fit_transform(y)
-
-    X_train, X_test, y_train, y_test = train_test_split(X_scale, y_scale, test_size=0.3, shuffle=False)
+    np.random.seed(42)
 
     X_train = np.reshape(X_train, (X_train.shape[0], 1, X_train.shape[1]))
     X_test = np.reshape(X_test, (X_test.shape[0], 1, X_test.shape[1]))
-
-    np.random.seed(42)
 
     model = Sequential()
     model.add(LSTM(200, input_shape=(X_train.shape[1], X_train.shape[2]), return_sequences=True,
@@ -65,17 +77,11 @@ def train(df):
     history = model.fit(X_train, y_train, batch_size=X_train.shape[0],
                         epochs=150, validation_data=(X_test, y_test), shuffle=False, verbose=False)
 
-    return model, history, X_train, X_test, scalerX, scalerY
+    return model, history
 
 
 def test_order_percent(df, model, scalerX, scalerY):
     import numpy as np
-    from enum import Enum
-
-    class Order(Enum):
-        STAY = 1
-        DOWN = 2
-        UP = 3
 
     n_error = 0
     y_predict_last = y_last = None
@@ -105,7 +111,6 @@ def test_order_percent(df, model, scalerX, scalerY):
         y_last = row['open']
 
         if real_order != predict_order:
-            # print('predicted %s, real %s'% (predict_order, real_order))
             n_error = n_error + 1
 
     count = df['open'].count()
