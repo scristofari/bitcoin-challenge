@@ -66,9 +66,11 @@ def train(X_train, X_test, y_train, y_test):
     model = Sequential()
     model.add(LSTM(200, input_shape=(X_train.shape[1], X_train.shape[2]), return_sequences=True,
                    kernel_regularizer=regularizers.l2(0.01)))
-    model.add(Dropout(0.3))
+    # model.add(Dropout(0.2))
+    model.add(LSTM(200, return_sequences=True))
+    # model.add(Dropout(0.2))
     model.add(LSTM(200, return_sequences=False))
-    model.add(Dropout(0.3))
+    # model.add(Dropout(0.2))
     model.add(Dense(1))
     model.add(Activation('linear'))
     model.summary()
@@ -77,6 +79,7 @@ def train(X_train, X_test, y_train, y_test):
     history = model.fit(X_train, y_train, batch_size=X_train.shape[0],
                         epochs=150, validation_data=(X_test, y_test), shuffle=False, verbose=False)
 
+    # @todo Save the model
     return model, history
 
 
@@ -116,3 +119,21 @@ def test_order_percent(df, model, scalerX, scalerY):
     count = df['open'].count()
     percent = (n_error / count) * 100
     print("Error Order percentage: %0.2f%%" % percent)
+
+
+def predict_order(product_id, price):
+    import csv
+    from . import twitter, reddit, gnews
+
+    predict_order = Order.UP
+    predict_price = last_predict_price = buy_price = 0
+
+    reddit_sentiment = reddit.get_sentiment()
+    twitter_sentiment = twitter.get_sentiment()
+    gnews_sentiment = gnews.get_sentiment()
+
+    # @todo Predict with the model
+
+    with open('order_history_%s.csv' % product_id, newline='', encoding='utf-8', mode='a') as file:
+        writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        writer.writerow(product_id, price, buy_price, last_predict_price, predict_price, predict_order)
