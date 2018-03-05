@@ -6,3 +6,5 @@ run:
 
 datacp:
 	scp root@159.65.82.141:/root/python/bitcoin-challenge/data.csv /Users/sylvaincristofari/python/bitcoin-challenge
+	scp root@159.65.82.141:/root/python/bitcoin-challenge/data.csv /Users/sylvaincristofari/python/bitcoin-challenge
+	scp root@159.65.82.141:/root/python/bitcoin-challenge/data.csv /Users/sylvaincristofari/python/bitcoin-challenge
