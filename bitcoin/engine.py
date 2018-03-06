@@ -78,7 +78,7 @@ def train(X_train, X_test, y_train, y_test):
 
     model.compile(loss='mae', optimizer='adam', metrics=['mse', 'mae'])
     history = model.fit(X_train, y_train, batch_size=X_train.shape[0],
-                        epochs=70, validation_data=(X_test, y_test), shuffle=False, verbose=False)
+                        epochs=100, validation_data=(X_test, y_test), shuffle=False, verbose=False)
 
     # @todo Save the model
     return model, history
