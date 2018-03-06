@@ -70,7 +70,8 @@ def train(X_train, X_test, y_train, y_test):
     model.add(LSTM(200, return_sequences=True,
                    recurrent_regularizer=regularizers.l1()))
     model.add(Dropout(0.2))
-    model.add(LSTM(200, return_sequences=False))
+    model.add(LSTM(200, return_sequences=False,
+                   recurrent_regularizer=regularizers.l1()))
     model.add(Dropout(0.2))
     model.add(Dense(1))
     model.add(Activation('linear'))
