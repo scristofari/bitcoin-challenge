@@ -81,8 +81,6 @@ def train(X_train, X_test, y_train, y_test):
     history = model.fit(X_train, y_train, batch_size=X_train.shape[0],
                         epochs=100, validation_data=(X_test, y_test), shuffle=False, verbose=False)
 
-    # @todo Save the model
-
     model.save('model.h5')
 
     return model, history
@@ -96,6 +94,7 @@ def test_order_percent(df, model, scalerX, scalerY):
 
     n_test = int(0.2 * df['close'].count())
     df = df[-n_test:]
+    count = df['open'].count()
     for index, row in df.iterrows():
         if y_predict_last is None:
             y_predict_last = y_last = row['open']
@@ -123,14 +122,16 @@ def test_order_percent(df, model, scalerX, scalerY):
 
         if real_order != predict_order:
             n_error = n_error + 1
+            if real_order != Order.STAY:
+                print('%d / %d ---> predicted %s - real %s' % (index, count, predict_order, real_order))
 
-    count = df['open'].count()
     percent = (n_error / count) * 100
     print("Error Order percentage: %0.2f%%" % percent)
 
 
 def predict_order(product_id, price):
     import csv
+    from keras.models import load_model
     from . import twitter, reddit, gnews
 
     predict_order = Order.UP
@@ -141,6 +142,7 @@ def predict_order(product_id, price):
     gnews_sentiment = gnews.get_sentiment()
 
     # @todo Predict with the model
+    model = load_model('model.h5')
 
     with open('order_history_%s.csv' % product_id, newline='', encoding='utf-8', mode='a') as file:
         writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
