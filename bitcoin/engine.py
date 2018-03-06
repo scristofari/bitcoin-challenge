@@ -44,7 +44,7 @@ def prepare(df):
     X_scale = scaler_x.fit_transform(X)
     y_scale = scaler_y.fit_transform(y)
 
-    X_train, X_test, y_train, y_test = train_test_split(X_scale, y_scale, test_size=0.3, shuffle=False)
+    X_train, X_test, y_train, y_test = train_test_split(X_scale, y_scale, test_size=0.2, shuffle=False)
 
     return X_train, X_test, y_train, y_test, scaler_x, scaler_y
 
@@ -64,20 +64,19 @@ def train(X_train, X_test, y_train, y_test):
     X_test = np.reshape(X_test, (X_test.shape[0], 1, X_test.shape[1]))
 
     model = Sequential()
-    model.add(LSTM(200, input_shape=(X_train.shape[1], X_train.shape[2]), return_sequences=True,
-                   kernel_regularizer=regularizers.l2(0.01)))
-    # model.add(Dropout(0.2))
+    model.add(LSTM(200, input_shape=(X_train.shape[1], X_train.shape[2]), return_sequences=True))
+    model.add(Dropout(0.2))
     model.add(LSTM(200, return_sequences=True))
-    # model.add(Dropout(0.2))
+    model.add(Dropout(0.2))
     model.add(LSTM(200, return_sequences=False))
-    # model.add(Dropout(0.2))
+    model.add(Dropout(0.2))
     model.add(Dense(1))
     model.add(Activation('linear'))
     model.summary()
 
     model.compile(loss='mae', optimizer='adam', metrics=['mse', 'mae'])
     history = model.fit(X_train, y_train, batch_size=X_train.shape[0],
-                        epochs=150, validation_data=(X_test, y_test), shuffle=False, verbose=False)
+                        epochs=70, validation_data=(X_test, y_test), shuffle=False, verbose=False)
 
     # @todo Save the model
     return model, history
@@ -88,6 +87,9 @@ def test_order_percent(df, model, scalerX, scalerY):
 
     n_error = 0
     y_predict_last = y_last = None
+
+    n_test = int(0.2 * df['close'].count())
+    df = df[-n_test:]
     for index, row in df.iterrows():
         if y_predict_last is None:
             y_predict_last = y_last = row['open']
