@@ -39,8 +39,8 @@ def prepare(df):
     X = df[['open', 'reddit_sentiment', 'tw_sentiment', 'tw_followers', 'google_sentiment']]
     y = df['close'].values.reshape(-1, 1)
 
-    scaler_x = MinMaxScaler(feature_range=(0, 1))
-    scaler_y = MinMaxScaler(feature_range=(0, 1))
+    scaler_x = MinMaxScaler(feature_range=(-1, 1))
+    scaler_y = MinMaxScaler(feature_range=(-1, 1))
     X_scale = scaler_x.fit_transform(X)
     y_scale = scaler_y.fit_transform(y)
 
@@ -64,9 +64,10 @@ def train(X_train, X_test, y_train, y_test):
     X_test = np.reshape(X_test, (X_test.shape[0], 1, X_test.shape[1]))
 
     model = Sequential()
-    model.add(LSTM(200, input_shape=(X_train.shape[1], X_train.shape[2]), return_sequences=True))
+    model.add(LSTM(200, input_shape=(X_train.shape[1], X_train.shape[2]), return_sequences=True, recurrent_regularizer=regularizers.l1()))
     model.add(Dropout(0.2))
-    model.add(LSTM(200, return_sequences=True))
+    model.add(LSTM(200, return_sequences=True,
+                   regularizers=regularizers.l1()))
     model.add(Dropout(0.2))
     model.add(LSTM(200, return_sequences=False))
     model.add(Dropout(0.2))
