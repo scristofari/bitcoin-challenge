@@ -82,6 +82,9 @@ def train(X_train, X_test, y_train, y_test):
                         epochs=100, validation_data=(X_test, y_test), shuffle=False, verbose=False)
 
     # @todo Save the model
+
+    model.save('model.h5')
+
     return model, history
 
 

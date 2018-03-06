@@ -6,6 +6,7 @@ WORKDIR /src
 COPY . /src
 
 RUN ln -s /usr/include/locale.h /usr/include/xlocale.h
+
 RUN pip install -r requirements.txt
 RUN python -m textblob.download_corpora
 
