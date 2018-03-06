@@ -64,10 +64,11 @@ def train(X_train, X_test, y_train, y_test):
     X_test = np.reshape(X_test, (X_test.shape[0], 1, X_test.shape[1]))
 
     model = Sequential()
-    model.add(LSTM(200, input_shape=(X_train.shape[1], X_train.shape[2]), return_sequences=True, recurrent_regularizer=regularizers.l1()))
+    model.add(LSTM(200, input_shape=(X_train.shape[1], X_train.shape[2]), return_sequences=True,
+                   recurrent_regularizer=regularizers.l1()))
     model.add(Dropout(0.2))
     model.add(LSTM(200, return_sequences=True,
-                   regularizers=regularizers.l1()))
+                   recurrent_regularizer=regularizers.l1()))
     model.add(Dropout(0.2))
     model.add(LSTM(200, return_sequences=False))
     model.add(Dropout(0.2))
