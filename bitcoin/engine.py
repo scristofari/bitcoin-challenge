@@ -36,6 +36,10 @@ def prepare(df):
     from sklearn.preprocessing import MinMaxScaler
     from sklearn.model_selection import train_test_split
 
+    # delete row or mean
+    #df = df.apply(lambda x: x.fillna(x.mean()), axis=0)
+    df.dropna(how='any', inplace=True)
+
     X = df[['open', 'reddit_sentiment', 'tw_sentiment', 'tw_followers', 'google_sentiment']]
     y = df['close'].values.reshape(-1, 1)
 
@@ -92,10 +96,10 @@ def test_order_percent(df, model, scalerX, scalerY):
     n_error = 0
     y_predict_last = y_last = None
 
-    n_test = int(0.2 * df['close'].count())
-    df = df[-n_test:]
     count = df['open'].count()
-    for index, row in df.iterrows():
+    n_test = int(0.2 * count)
+    df_test = df[-n_test:]
+    for index, row in df_test.iterrows():
         if y_predict_last is None:
             y_predict_last = y_last = row['open']
 
@@ -122,10 +126,10 @@ def test_order_percent(df, model, scalerX, scalerY):
 
         if real_order != predict_order:
             n_error = n_error + 1
-            if real_order != Order.STAY:
-                print('%d / %d ---> predicted %s - real %s' % (index, count, predict_order, real_order))
+            #if real_order != Order.STAY:
+            print('%d / %d ---> predicted %s - real %s' % (index, count, predict_order, real_order))
 
-    percent = (n_error / count) * 100
+    percent = (n_error / df_test['open'].count()) * 100
     print("Error Order percentage: %0.2f%%" % percent)
 
 
