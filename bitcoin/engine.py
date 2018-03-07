@@ -37,7 +37,7 @@ def prepare(df):
     from sklearn.model_selection import train_test_split
 
     # delete row or mean
-    #df = df.apply(lambda x: x.fillna(x.mean()), axis=0)
+    # df = df.apply(lambda x: x.fillna(x.mean()), axis=0)
     df.dropna(how='any', inplace=True)
 
     X = df[['open', 'reddit_sentiment', 'tw_sentiment', 'tw_followers', 'google_sentiment']]
@@ -127,7 +127,7 @@ def test_order_percent(df, model, scalerX, scalerY):
 
         if real_order != predict_order:
             n_error = n_error + 1
-            #if real_order != Order.STAY:
+            # if real_order != Order.STAY:
             print('%d / %d ---> predicted %s - real %s' % (index, count_test, predict_order, real_order))
 
     percent = (n_error / count_test) * 100
