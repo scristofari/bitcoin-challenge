@@ -98,7 +98,8 @@ def test_order_percent(df, model, scalerX, scalerY):
 
     count = df['open'].count()
     n_test = int(0.2 * count)
-    df_test = df[-n_test:]
+    df_test = df[-n_test:].reset_index()
+    count_test = df_test['open'].count()
     for index, row in df_test.iterrows():
         if y_predict_last is None:
             y_predict_last = y_last = row['open']
@@ -127,9 +128,9 @@ def test_order_percent(df, model, scalerX, scalerY):
         if real_order != predict_order:
             n_error = n_error + 1
             #if real_order != Order.STAY:
-            print('%d / %d ---> predicted %s - real %s' % (index, count, predict_order, real_order))
+            print('%d / %d ---> predicted %s - real %s' % (index, count_test, predict_order, real_order))
 
-    percent = (n_error / df_test['open'].count()) * 100
+    percent = (n_error / count_test) * 100
     print("Error Order percentage: %0.2f%%" % percent)
 
 
