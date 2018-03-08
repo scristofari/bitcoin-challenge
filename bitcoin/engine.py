@@ -134,20 +134,35 @@ def test_order_percent(df, model, scalerX, scalerY):
     print("Error Order percentage: %0.2f%%" % percent)
 
 
-def predict_order(product_id, price):
+def predict_order(product_id):
     import csv
+    import numpy as np
+    import gdax
     from keras.models import load_model
     from . import twitter, reddit, gnews
+
+    df = load_data(product_id)
+    X_train, X_test, y_train, y_test, scaler_x, scaler_y = prepare(df)
 
     predict_order = Order.UP
     predict_price = last_predict_price = buy_price = 0
 
+    public_client = gdax.PublicClient()
+    data = public_client.get_product_ticker(product_id='BTC-USD')
+    price = [float(data['price'])]
     reddit_sentiment = reddit.get_sentiment()
     twitter_sentiment = twitter.get_sentiment()
     gnews_sentiment = gnews.get_sentiment()
 
-    # @todo Predict with the model
-    model = load_model('model.h5')
+    model = load_model('./model.h5')
+
+    data = np.array(price + reddit_sentiment + twitter_sentiment + gnews_sentiment).reshape(1, -1)
+
+    x_predict = data.reshape(1, -1)
+    x_predict = scaler_x.transform(x_predict)
+    x_predict_reshaped = np.reshape(x_predict, (1, 1, 5))
+    y_predict_r = model.predict(x_predict_reshaped)
+    predict_price = scaler_y.inverse_transform(y_predict_r)
 
     with open('order_history_%s.csv' % product_id, newline='', encoding='utf-8', mode='a') as file:
         writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
