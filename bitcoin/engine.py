@@ -20,7 +20,7 @@ def generate_spot_data():
         # rate / twitter / reddit / gnews
         with open('%s.csv' % c, newline='', encoding='utf-8', mode='a') as file:
             writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-            writer.writerow(rate + twitter_sentiment + reddit_sentiment + gnews_sentiment)
+            writer.writerow(rate + twitter_sentiment + [reddit_sentiment] + [gnews_sentiment])
 
 
 def load_data(product_id):
@@ -110,12 +110,13 @@ def test_order_percent(df, model, scalerX, scalerY):
         x_predict_reshaped = np.reshape(x_predict, (1, 1, 5))
         y_predict_r = model.predict(x_predict_reshaped)
         y_predict_r_rescaled = scalerY.inverse_transform(y_predict_r)
-
+        y_predict_r_rescaled = float("%.2f" % y_predict_r_rescaled)
         predict_order = real_order = Order.DOWN
         if y_predict_last < y_predict_r_rescaled:
             predict_order = Order.UP
         elif y_predict_last == y_predict_r_rescaled:
             predict_order = Order.STAY
+
         if y_last < row['open']:
             real_order = Order.UP
         elif y_last == row['open']:
@@ -136,32 +137,35 @@ def test_order_percent(df, model, scalerX, scalerY):
 def predict_order(product_id):
     import csv
     import numpy as np
-    import gdax
     from keras.models import load_model
-    from . import twitter, reddit, gnews
+    from . import twitter, reddit, gnews, rates
 
     df = load_data(product_id)
     X_train, X_test, y_train, y_test, scaler_x, scaler_y = prepare(df)
 
-    predict_order = Order.UP
     last_predict_price = buy_price = 0
 
-    public_client = gdax.PublicClient()
-    data = public_client.get_product_ticker(product_id='BTC-USD')
-
-    price = [float(data['price'])]
+    price = rates.current_price(product_id)
     reddit_sentiment = reddit.get_sentiment()
     twitter_sentiment = twitter.get_sentiment()
     gnews_sentiment = gnews.get_sentiment()
 
-    model = load_model('./model-BTC-USD.h5' % product_id)
-    x_predict = np.array([price + reddit_sentiment + twitter_sentiment + gnews_sentiment]).reshape(1, -1)
+    model = load_model('./model-%s.h5' % product_id)
+
+    x_predict = np.array(
+        [price, reddit_sentiment, twitter_sentiment[0], twitter_sentiment[1], gnews_sentiment]).reshape(1, -1)
     x_predict = scaler_x.transform(x_predict)
     x_predict_reshaped = np.reshape(x_predict, (1, 1, 5))
     y_predict_r = model.predict(x_predict_reshaped)
-    predict_price = scaler_y.inverse_transform(y_predict_r)
 
-    print(predict_price)
+    predict_price = float("%.2f" % scaler_y.inverse_transform(y_predict_r))
+
+    predict_order = Order.DOWN
+    if price < predict_price:
+        predict_order = Order.UP
+    elif price == predict_price:
+        predict_order = Order.STAY
+
     with open('order_history_%s.csv' % product_id, newline='', encoding='utf-8', mode='a') as file:
         writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-        writer.writerow(product_id, price, buy_price, last_predict_price, predict_price, predict_order)
+        writer.writerow([product_id, price, buy_price, last_predict_price, predict_price, predict_order])

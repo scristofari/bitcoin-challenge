@@ -17,4 +17,4 @@ def get_sentiment():
             'polarity': pol
         }, ignore_index=True)
 
-    return [np.mean(df.values)]
+    return np.mean(df.values)
