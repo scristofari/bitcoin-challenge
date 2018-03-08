@@ -13,12 +13,9 @@ class BitCoinChallenge(cmd.Cmd):
         engine.train('BTC-EUR', X_train, X_test, y_train, y_test)
 
     def do_test(self, arg):
+        from keras.models import load_model
         data = engine.load_data('BTC-EUR')
-        X_train, X_test, y_train, y_test, scaler_x, scaler_y = engine.prepare(data)
-
-        model, history = engine.train('BTC-EUR', X_train, X_test, y_train, y_test)
-
-        data = engine.load_data('BTC-EUR')
+        model = load_model('model-BTC-EUR.h5')
         X_train, X_test, y_train, y_test, scaler_x, scaler_y = engine.prepare(data)
         engine.test_order_percent(data, model, scaler_x, scaler_y)
 

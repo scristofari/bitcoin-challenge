@@ -141,6 +141,11 @@ def predict_order(product_id, reddit_sentiment, twitter_sentiment, gnews_sentime
     import numpy as np
     from keras.models import load_model
     from . import rates
+    import pandas as pd
+
+    history = pd.read_csv('order_history_%s.csv' % product_id, names=['price', 'predict_price', 'predict_order'])
+    last_history = history[-1:]
+    last_predict_price = float(last_history['predict_price'].values)
 
     df = load_data(product_id)
     X_train, X_test, y_train, y_test, scaler_x, scaler_y = prepare(df)
@@ -156,9 +161,9 @@ def predict_order(product_id, reddit_sentiment, twitter_sentiment, gnews_sentime
     predict_price = float("%.2f" % scaler_y.inverse_transform(y_predict_r))
 
     predict_order = Order.DOWN
-    if price < predict_price:
+    if last_predict_price < predict_price:
         predict_order = Order.UP
-    elif price == predict_price:
+    elif last_predict_price == predict_price:
         predict_order = Order.STAY
 
     with open('order_history_%s.csv' % product_id, newline='', encoding='utf-8', mode='a') as file:
