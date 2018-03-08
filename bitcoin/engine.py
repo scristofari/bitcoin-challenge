@@ -17,10 +17,11 @@ def generate_spot_data():
     currencies = ['BTC-USD', 'BTC-EUR']
     for c in currencies:
         rate = rates.last_rate(c)
-        # rate / twitter / reddit / gnews
         with open('%s.csv' % c, newline='', encoding='utf-8', mode='a') as file:
             writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
             writer.writerow(rate + twitter_sentiment + [reddit_sentiment] + [gnews_sentiment])
+
+    predict_order('BTC-EUR', reddit_sentiment, twitter_sentiment, gnews_sentiment)
 
 
 def load_data(product_id):
@@ -111,6 +112,7 @@ def test_order_percent(df, model, scalerX, scalerY):
         y_predict_r = model.predict(x_predict_reshaped)
         y_predict_r_rescaled = scalerY.inverse_transform(y_predict_r)
         y_predict_r_rescaled = float("%.2f" % y_predict_r_rescaled)
+
         predict_order = real_order = Order.DOWN
         if y_predict_last < y_predict_r_rescaled:
             predict_order = Order.UP
@@ -134,26 +136,19 @@ def test_order_percent(df, model, scalerX, scalerY):
     print("Error Order percentage: %0.2f%%" % percent)
 
 
-def predict_order(product_id):
+def predict_order(product_id, reddit_sentiment, twitter_sentiment, gnews_sentiment):
     import csv
     import numpy as np
     from keras.models import load_model
-    from . import twitter, reddit, gnews, rates
+    from . import rates
 
     df = load_data(product_id)
     X_train, X_test, y_train, y_test, scaler_x, scaler_y = prepare(df)
 
-    last_predict_price = buy_price = 0
-
     price = rates.current_price(product_id)
-    reddit_sentiment = reddit.get_sentiment()
-    twitter_sentiment = twitter.get_sentiment()
-    gnews_sentiment = gnews.get_sentiment()
-
     model = load_model('./model-%s.h5' % product_id)
 
-    x_predict = np.array(
-        [price, reddit_sentiment, twitter_sentiment[0], twitter_sentiment[1], gnews_sentiment]).reshape(1, -1)
+    x_predict = np.array([price, reddit_sentiment, twitter_sentiment[0], twitter_sentiment[1], gnews_sentiment]).reshape(1, -1)
     x_predict = scaler_x.transform(x_predict)
     x_predict_reshaped = np.reshape(x_predict, (1, 1, 5))
     y_predict_r = model.predict(x_predict_reshaped)
@@ -168,4 +163,4 @@ def predict_order(product_id):
 
     with open('order_history_%s.csv' % product_id, newline='', encoding='utf-8', mode='a') as file:
         writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-        writer.writerow([product_id, price, buy_price, last_predict_price, predict_price, predict_order])
+        writer.writerow([price, predict_price, predict_order])

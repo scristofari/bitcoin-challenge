@@ -9,3 +9,6 @@ datacp:
 
 test:
 	docker run --rm  -v $(PWD):/src bitcoin-challenge python main.py test
+
+train:
+	docker run --rm  -v $(PWD):/src bitcoin-challenge python main.py train
