@@ -3,4 +3,4 @@
 *.pyc
 *.pyo
 .ipynb_checkpoints/
-model.h5
+*.h5
