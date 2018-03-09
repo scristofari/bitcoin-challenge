@@ -1,5 +1,7 @@
 from enum import Enum
 
+TEST_SIZE = 0.3
+
 
 class Order(Enum):
     STAY = 1
@@ -49,7 +51,7 @@ def prepare(df):
     X_scale = scaler_x.fit_transform(X)
     y_scale = scaler_y.fit_transform(y)
 
-    X_train, X_test, y_train, y_test = train_test_split(X_scale, y_scale, test_size=0.3, shuffle=False)
+    X_train, X_test, y_train, y_test = train_test_split(X_scale, y_scale, test_size=TEST_SIZE, shuffle=False)
 
     return X_train, X_test, y_train, y_test, scaler_x, scaler_y
 
@@ -100,9 +102,10 @@ def test_order_percent(df, model, scalerX, scalerY):
     previous_cash = bitcoin = n_error = counter = 0
     last_real_order = y_predict_last = y_last = None
     m = joblib.load('./model-anomaly-%s.pkl' % 'BTC-EUR')
+    anomaly_limit =  np.exp(m.score(np.percentile(df['volume'].values, 95)))
 
     count = df['open'].count()
-    n_test = int(0.3 * count)
+    n_test = int(TEST_SIZE * count)
     df_test = df[-n_test:].reset_index()
     count_test = df_test['open'].count()
     for index, row in df_test.iterrows():
@@ -142,7 +145,7 @@ def test_order_percent(df, model, scalerX, scalerY):
         if predict_order == Order.UP and last_real_order == Order.UP:
             if cash > 0 and buy is False:
                 previous_cash = cash
-                #print('buy at %f' % row['open'])
+                # print('buy at %f' % row['open'])
                 buy = True
                 bitcoin = cash / row['open']
                 cash = 0
@@ -150,14 +153,14 @@ def test_order_percent(df, model, scalerX, scalerY):
         elif predict_order == Order.DOWN and last_real_order == Order.DOWN:
             if cash == 0 and buy is True:
                 anomaly = np.exp(m.score(row['volume']))
-                if previous_cash < bitcoin * row['open'] and anomaly > 0.008:
-                    #print('sell at %f' % row['open'])
+                if previous_cash < bitcoin * row['open'] and anomaly > anomaly_limit:
+                    # print('sell at %f' % row['open'])
                     buy = False
                     cash = bitcoin * row['open']
                     bitcoin = 0
 
-                if anomaly < 0.008:
-                    #print('[Anomaly detected] Sell at %f' % row['open'])
+                if anomaly < anomaly_limit:
+                    # print('[Anomaly detected] Sell at %f' % row['open'])
                     buy = False
                     cash = bitcoin * row['open']
                     bitcoin = 0
@@ -171,9 +174,6 @@ def test_order_percent(df, model, scalerX, scalerY):
     if cash == 0:
         cash = (bitcoin * y_last)
         print('Cash %f' % (bitcoin * y_last))
-    else:
-        print('Cash %f' % cash)
-
     print("With prediction %.2f euros" % cash)
 
     bitcoin_first = 1000 / df[0:1]['open'].values
