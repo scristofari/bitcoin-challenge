@@ -1,11 +1,12 @@
 import cmd
 import sys
-from bitcoin import engine
+from bitcoin import engine, core
 
 
 class BitCoinChallenge(cmd.Cmd):
     def do_spot(self, arg):
-        engine.generate_spot_data()
+        c = core.Core()
+        c.generate_spot_data()
 
     def do_train(self, arg):
         df = engine.load_data('BTC-EUR')
