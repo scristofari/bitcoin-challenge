@@ -169,9 +169,16 @@ def test_order_percent(df, model, scalerX, scalerY):
     print("Error Order percentage: %0.2f%%" % percent)
 
     if cash == 0:
+        cash = (bitcoin * y_last)
         print('Cash %f' % (bitcoin * y_last))
     else:
         print(print('Cash %f' % cash))
+
+    print("With prediction %.2f euros" % cash)
+
+    bitcoin_first = 1000 / df[0:1]['open'].values
+    cash_last = bitcoin_first * float(df[-1:]['open'].values)
+    print("Without prediction %.2f euros" % cash_last)
 
 
 def predict_order(product_id, reddit_sentiment, twitter_sentiment, gnews_sentiment):
