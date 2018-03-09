@@ -94,14 +94,17 @@ def train(product_id, X_train, X_test, y_train, y_test):
 def test_order_percent(df, model, scalerX, scalerY):
     import numpy as np
 
-    n_error = 0
-    y_predict_last = y_last = None
+    buy = False
+    cash = 1000
+    previous_cash = bitcoin = n_error = 0
+    last_real_order = y_predict_last = y_last = None
 
     count = df['open'].count()
     n_test = int(0.2 * count)
     df_test = df[-n_test:].reset_index()
     count_test = df_test['open'].count()
     for index, row in df_test.iterrows():
+
         if y_predict_last is None:
             y_predict_last = y_last = row['open']
 
@@ -113,27 +116,53 @@ def test_order_percent(df, model, scalerX, scalerY):
         y_predict_r_rescaled = scalerY.inverse_transform(y_predict_r)
         y_predict_r_rescaled = float("%.2f" % y_predict_r_rescaled)
 
-        predict_order = real_order = Order.DOWN
+        predict_order = Order.DOWN
         if y_predict_last < y_predict_r_rescaled:
             predict_order = Order.UP
         elif y_predict_last == y_predict_r_rescaled:
             predict_order = Order.STAY
 
+        real_order = Order.DOWN
         if y_last < row['open']:
             real_order = Order.UP
         elif y_last == row['open']:
             real_order = Order.STAY
 
         y_predict_last = y_predict_r_rescaled
-        y_last = row['open']
 
         if real_order != predict_order:
             n_error = n_error + 1
-            # if real_order != Order.STAY:
-            print('%d / %d ---> predicted %s - real %s' % (index, count_test, predict_order, real_order))
+
+        if last_real_order is None:
+            last_real_order = real_order
+            continue
+
+        if predict_order == Order.UP and last_real_order == Order.UP:
+            if cash > 0 and buy is False:
+                previous_cash = cash
+                print('buy at %f' % row['open'])
+                buy = True
+                bitcoin = cash / row['open']
+                cash = 0
+
+        elif predict_order == Order.DOWN and last_real_order == Order.DOWN:
+            if cash == 0 and buy is True:
+                if previous_cash < bitcoin * row['open']:
+                    print('sell at %f' % row['open'])
+                    buy = False
+                    cash = bitcoin * row['open']
+                    bitcoin = 0
+
+        y_last = row['open']
+        last_real_order = real_order
 
     percent = (n_error / count_test) * 100
     print("Error Order percentage: %0.2f%%" % percent)
+
+    if cash == 0:
+        print('Cash %f' % (bitcoin * y_last))
+    else:
+        print(print('Cash %f' % cash))
 
 
 def predict_order(product_id, reddit_sentiment, twitter_sentiment, gnews_sentiment):
@@ -153,7 +182,8 @@ def predict_order(product_id, reddit_sentiment, twitter_sentiment, gnews_sentime
     price = rates.current_price(product_id)
     model = load_model('./model-%s.h5' % product_id)
 
-    x_predict = np.array([price, reddit_sentiment, twitter_sentiment[0], twitter_sentiment[1], gnews_sentiment]).reshape(1, -1)
+    x_predict = np.array(
+        [price, reddit_sentiment, twitter_sentiment[0], twitter_sentiment[1], gnews_sentiment]).reshape(1, -1)
     x_predict = scaler_x.transform(x_predict)
     x_predict_reshaped = np.reshape(x_predict, (1, 1, 5))
     y_predict_r = model.predict(x_predict_reshaped)
