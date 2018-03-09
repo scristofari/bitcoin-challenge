@@ -3,9 +3,8 @@ from enum import Enum
 import numpy as np
 import pandas as pd
 from . import gdax_client, sentiment
-from keras.models import load_model
 
-TEST_SIZE = 0.3
+TEST_SIZE = 0.2
 
 
 class Order(Enum):
@@ -41,6 +40,8 @@ class Core:
                            )
 
     def predict_order(self, state):
+        from keras.models import load_model
+
         history = pd.read_csv('order_history_%s.csv' % self.product_id,
                               names=['price', 'predict_price', 'predict_order'])
         last_history = history[-1:]
@@ -128,13 +129,12 @@ class Core:
 
         model.save('model-%s.h5' % self.product_id)
 
-        return model, history
+        return history
 
     def train_anomaly(self):
         from sklearn.neighbors import KernelDensity
         from sklearn.externals import joblib
         from sklearn.model_selection import GridSearchCV
-        import numpy as np
 
         df = self.load_data()
 
@@ -148,6 +148,7 @@ class Core:
         return grid.best_estimator_
 
     def test_order_percent(self):
+        from keras.models import load_model
         from sklearn.externals import joblib
 
         df = self.load_data()
