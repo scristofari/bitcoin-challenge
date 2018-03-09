@@ -18,7 +18,7 @@ class Core:
     gdax_client = gdax_client.GdaxClient()
     product_id = None
 
-    def __init__(self, product_id='BTC_EUR'):
+    def __init__(self, product_id='BTC-EUR'):
         self.product_id = product_id
 
     def generate_spot_data(self):
@@ -92,13 +92,15 @@ class Core:
 
         return X_train, X_test, y_train, y_test, scaler_x, scaler_y
 
-    def train(self, df):
+    def train(self):
         from keras import regularizers
         from keras.models import Sequential
         from keras.layers import Dense
         from keras.layers import LSTM
         from keras.layers import Activation
         from keras.layers import Dropout
+
+        df = self.load_data()
 
         np.random.seed(42)
         X_train, X_test, y_train, y_test, scaler_x, scaler_y = Core.prepare_inputs_outputs(df)
@@ -128,11 +130,13 @@ class Core:
 
         return model, history
 
-    def train_anomaly(self, df):
+    def train_anomaly(self):
         from sklearn.neighbors import KernelDensity
         from sklearn.externals import joblib
         from sklearn.model_selection import GridSearchCV
         import numpy as np
+
+        df = self.load_data()
 
         X = df['volume'].values.reshape(-1, 1)
         params = {'bandwidth': np.logspace(0, df['volume'].max())}
@@ -204,7 +208,7 @@ class Core:
 
             elif predict_order == Order.DOWN and last_real_order == Order.DOWN:
                 if cash == 0 and buy is True:
-                    anomaly = np.exp(m.score(row['volume']))
+                    anomaly = np.exp(model_anomaly.score(row['volume']))
                     if previous_cash < bitcoin * row['open'] and anomaly > anomaly_limit:
                         buy = False
                         cash = bitcoin * row['open']
