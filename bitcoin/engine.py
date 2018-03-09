@@ -102,7 +102,7 @@ def test_order_percent(df, model, scalerX, scalerY):
     previous_cash = bitcoin = n_error = counter = 0
     last_real_order = y_predict_last = y_last = None
     m = joblib.load('./model-anomaly-%s.pkl' % 'BTC-EUR')
-    anomaly_limit =  np.exp(m.score(np.percentile(df['volume'].values, 95)))
+    anomaly_limit = np.exp(m.score(np.percentile(df['volume'].values, 95)))
 
     count = df['open'].count()
     n_test = int(TEST_SIZE * count)
@@ -145,7 +145,6 @@ def test_order_percent(df, model, scalerX, scalerY):
         if predict_order == Order.UP and last_real_order == Order.UP:
             if cash > 0 and buy is False:
                 previous_cash = cash
-                # print('buy at %f' % row['open'])
                 buy = True
                 bitcoin = cash / row['open']
                 cash = 0
@@ -154,13 +153,11 @@ def test_order_percent(df, model, scalerX, scalerY):
             if cash == 0 and buy is True:
                 anomaly = np.exp(m.score(row['volume']))
                 if previous_cash < bitcoin * row['open'] and anomaly > anomaly_limit:
-                    # print('sell at %f' % row['open'])
                     buy = False
                     cash = bitcoin * row['open']
                     bitcoin = 0
 
                 if anomaly < anomaly_limit:
-                    # print('[Anomaly detected] Sell at %f' % row['open'])
                     buy = False
                     cash = bitcoin * row['open']
                     bitcoin = 0
@@ -173,7 +170,7 @@ def test_order_percent(df, model, scalerX, scalerY):
 
     if cash == 0:
         cash = (bitcoin * y_last)
-        print('Cash %f' % (bitcoin * y_last))
+
     print("With prediction %.2f euros" % cash)
 
     bitcoin_first = 1000 / df[0:1]['open'].values
