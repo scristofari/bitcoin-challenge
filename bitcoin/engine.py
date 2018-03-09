@@ -142,22 +142,22 @@ def test_order_percent(df, model, scalerX, scalerY):
         if predict_order == Order.UP and last_real_order == Order.UP:
             if cash > 0 and buy is False:
                 previous_cash = cash
-                print('buy at %f' % row['open'])
+                #print('buy at %f' % row['open'])
                 buy = True
                 bitcoin = cash / row['open']
                 cash = 0
 
         elif predict_order == Order.DOWN and last_real_order == Order.DOWN:
             if cash == 0 and buy is True:
-                anomaly = np.exp(m.best_estimator_.score(row['volume']))
+                anomaly = np.exp(m.score(row['volume']))
                 if previous_cash < bitcoin * row['open'] and anomaly > 0.008:
-                    print('sell at %f' % row['open'])
+                    #print('sell at %f' % row['open'])
                     buy = False
                     cash = bitcoin * row['open']
                     bitcoin = 0
 
                 if anomaly < 0.008:
-                    print('[Anomaly detected] Sell at %f' % row['open'])
+                    #print('[Anomaly detected] Sell at %f' % row['open'])
                     buy = False
                     cash = bitcoin * row['open']
                     bitcoin = 0
@@ -172,7 +172,7 @@ def test_order_percent(df, model, scalerX, scalerY):
         cash = (bitcoin * y_last)
         print('Cash %f' % (bitcoin * y_last))
     else:
-        print(print('Cash %f' % cash))
+        print('Cash %f' % cash)
 
     print("With prediction %.2f euros" % cash)
 
@@ -228,6 +228,6 @@ def train_anomaly(product_id, df):
     grid = GridSearchCV(KernelDensity(), params)
     grid.fit(X)
 
-    joblib.dump(grid, 'model-anomaly-%s.pkl' % product_id)
+    joblib.dump(grid.best_estimator_, 'model-anomaly-%s.pkl' % product_id)
 
     return grid.best_estimator_
