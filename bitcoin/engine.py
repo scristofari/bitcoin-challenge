@@ -49,7 +49,7 @@ def prepare(df):
     X_scale = scaler_x.fit_transform(X)
     y_scale = scaler_y.fit_transform(y)
 
-    X_train, X_test, y_train, y_test = train_test_split(X_scale, y_scale, test_size=0.2, shuffle=False)
+    X_train, X_test, y_train, y_test = train_test_split(X_scale, y_scale, test_size=0.3, shuffle=False)
 
     return X_train, X_test, y_train, y_test, scaler_x, scaler_y
 
@@ -93,14 +93,16 @@ def train(product_id, X_train, X_test, y_train, y_test):
 
 def test_order_percent(df, model, scalerX, scalerY):
     import numpy as np
+    from sklearn.externals import joblib
 
     buy = False
     cash = 1000
-    previous_cash = bitcoin = n_error = 0
+    previous_cash = bitcoin = n_error = counter = 0
     last_real_order = y_predict_last = y_last = None
+    m = joblib.load('./model-anomaly-%s.pkl' % 'BTC-EUR')
 
     count = df['open'].count()
-    n_test = int(0.2 * count)
+    n_test = int(0.3 * count)
     df_test = df[-n_test:].reset_index()
     count_test = df_test['open'].count()
     for index, row in df_test.iterrows():
@@ -147,8 +149,15 @@ def test_order_percent(df, model, scalerX, scalerY):
 
         elif predict_order == Order.DOWN and last_real_order == Order.DOWN:
             if cash == 0 and buy is True:
-                if previous_cash < bitcoin * row['open']:
+                anomaly = np.exp(m.best_estimator_.score(row['volume']))
+                if previous_cash < bitcoin * row['open'] and anomaly > 0.008:
                     print('sell at %f' % row['open'])
+                    buy = False
+                    cash = bitcoin * row['open']
+                    bitcoin = 0
+
+                if anomaly < 0.008:
+                    print('[Anomaly detected] Sell at %f' % row['open'])
                     buy = False
                     cash = bitcoin * row['open']
                     bitcoin = 0
@@ -199,3 +208,19 @@ def predict_order(product_id, reddit_sentiment, twitter_sentiment, gnews_sentime
     with open('order_history_%s.csv' % product_id, newline='', encoding='utf-8', mode='a') as file:
         writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
         writer.writerow([price, predict_price, predict_order])
+
+
+def train_anomaly(product_id, df):
+    from sklearn.neighbors import KernelDensity
+    from sklearn.externals import joblib
+    from sklearn.model_selection import GridSearchCV
+    import numpy as np
+
+    X = df['volume'].values.reshape(-1, 1)
+    params = {'bandwidth': np.logspace(0, df['volume'].max())}
+    grid = GridSearchCV(KernelDensity(), params)
+    grid.fit(X)
+
+    joblib.dump(grid, 'model-anomaly-%s.pkl' % product_id)
+
+    return grid.best_estimator_

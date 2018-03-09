@@ -8,9 +8,10 @@ class BitCoinChallenge(cmd.Cmd):
         engine.generate_spot_data()
 
     def do_train(self, arg):
-        data = engine.load_data('BTC-EUR')
-        X_train, X_test, y_train, y_test, scaler_x, scaler_y = engine.prepare(data)
+        df = engine.load_data('BTC-EUR')
+        X_train, X_test, y_train, y_test, scaler_x, scaler_y = engine.prepare(df)
         engine.train('BTC-EUR', X_train, X_test, y_train, y_test)
+        engine.train_anomaly('BTC-EUR', df)
 
     def do_test(self, arg):
         from keras.models import load_model
