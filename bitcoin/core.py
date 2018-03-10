@@ -3,8 +3,9 @@ from enum import Enum
 import numpy as np
 import pandas as pd
 from . import gdax_client, sentiment
+from datetime import datetime
 
-TEST_SIZE = 0.2
+TEST_SIZE = 0.3
 
 
 class Order(Enum):
@@ -155,11 +156,11 @@ class Core:
         _, _, _, _, scaler_x, scaler_y = Core.prepare_inputs_outputs(df)
         model = load_model('./model-%s.h5' % self.product_id)
         model_anomaly = joblib.load('./model-anomaly-%s.pkl' % self.product_id)
-        anomaly_limit = np.exp(model_anomaly.score(np.percentile(df['volume'].values, 95)))
+        anomaly_limit = np.exp(model_anomaly.score(np.percentile(df['volume'].values, 75)))
 
         buy = False
         cash = 1000
-        previous_cash = bitcoin = n_error = 0
+        previous_cash = bitcoin = n_error = n_anomalies = 0
         last_real_order = y_predict_last = y_last = None
 
         count = df['open'].count()
@@ -200,14 +201,14 @@ class Core:
                 last_real_order = real_order
                 continue
 
-            if predict_order == Order.UP and last_real_order == Order.UP:
+            if predict_order == Order.UP:  # and last_real_order == Order.UP:
                 if cash > 0 and buy is False:
                     previous_cash = cash
                     buy = True
                     bitcoin = cash / row['open']
                     cash = 0
 
-            elif predict_order == Order.DOWN and last_real_order == Order.DOWN:
+            elif predict_order == Order.DOWN:  # and last_real_order == Order.DOWN:
                 if cash == 0 and buy is True:
                     anomaly = np.exp(model_anomaly.score(row['volume']))
                     if previous_cash < bitcoin * row['open'] and anomaly > anomaly_limit:
@@ -216,6 +217,7 @@ class Core:
                         bitcoin = 0
 
                     if anomaly < anomaly_limit:
+                        n_anomalies = n_anomalies + 1
                         buy = False
                         cash = bitcoin * row['open']
                         bitcoin = 0
@@ -229,8 +231,18 @@ class Core:
         if cash == 0:
             cash = (bitcoin * y_last)
 
-        print("With prediction %.2f euros" % cash)
+        from_date = datetime.fromtimestamp(df_test[0:1]['time'].values).strftime('%Y-%m-%d %H:%M:%S')
+        to_date = datetime.fromtimestamp(df_test[-1:]['time'].values).strftime('%Y-%m-%d %H:%M:%S')
+        print("TEST From %s to %s" % (from_date, to_date))
 
-        bitcoin_first = 1000 / df[0:1]['open'].values
-        cash_last = bitcoin_first * float(df[-1:]['open'].values)
-        print("Without prediction %.2f euros" % cash_last)
+        percent_predict_win_loss = (cash - 1000) / 1000 * 100
+        n_days = int(count_test / 1440)
+        print("Number of anomalies %d" % n_anomalies)
+        print("With prediction %.2f euros => %.2f%% => %.2f%% / day" % (
+        cash, percent_predict_win_loss, float(percent_predict_win_loss / n_days)))
+
+        bitcoin_first = 1000 / df_test[0:1]['open'].values
+        cash_last = bitcoin_first * float(df_test[-1:]['open'].values)
+        percent_win_loss = (cash_last - 1000) / 1000 * 100
+        print("Without prediction %.2f euros => %.2f%% => %.2f%% / day" % (
+        cash_last, percent_win_loss, float(percent_win_loss / n_days)))
