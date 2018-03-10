@@ -5,7 +5,8 @@ import pandas as pd
 from . import gdax_client, sentiment
 from datetime import datetime
 
-TEST_SIZE = 0.3
+TEST_SIZE = 0.2
+CASH_FIRST = 200
 
 
 class Order(Enum):
@@ -159,8 +160,8 @@ class Core:
         anomaly_limit = np.exp(model_anomaly.score(np.percentile(df['volume'].values, 75)))
 
         buy = False
-        cash = 1000
-        previous_cash = bitcoin = n_error = n_anomalies = 0
+        cash = CASH_FIRST
+        previous_cash = bitcoin = n_error = n_anomalies = n_api_call = 0
         last_real_order = y_predict_last = y_last = None
 
         count = df['open'].count()
@@ -207,6 +208,7 @@ class Core:
                     buy = True
                     bitcoin = cash / row['open']
                     cash = 0
+                    n_api_call = n_api_call + 1
 
             elif predict_order == Order.DOWN:  # and last_real_order == Order.DOWN:
                 if cash == 0 and buy is True:
@@ -215,12 +217,14 @@ class Core:
                         buy = False
                         cash = bitcoin * row['open']
                         bitcoin = 0
+                        n_api_call = n_api_call + 1
 
                     if anomaly < anomaly_limit:
                         n_anomalies = n_anomalies + 1
                         buy = False
                         cash = bitcoin * row['open']
                         bitcoin = 0
+                        n_api_call = n_api_call + 1
 
             y_last = row['open']
             last_real_order = real_order
@@ -235,14 +239,15 @@ class Core:
         to_date = datetime.fromtimestamp(df_test[-1:]['time'].values).strftime('%Y-%m-%d %H:%M:%S')
         print("TEST From %s to %s" % (from_date, to_date))
 
-        percent_predict_win_loss = (cash - 1000) / 1000 * 100
+        percent_predict_win_loss = (cash - CASH_FIRST) / CASH_FIRST * 100
         n_days = int(count_test / 1440)
-        print("Number of anomalies %d" % n_anomalies)
+        print("Number of api calls: %.2f / min" % float(n_api_call / count_test))
+        print("Number of anomalies: %d" % n_anomalies)
         print("With prediction %.2f euros => %.2f%% => %.2f%% / day" % (
-        cash, percent_predict_win_loss, float(percent_predict_win_loss / n_days)))
+            cash, percent_predict_win_loss, float(percent_predict_win_loss / n_days)))
 
-        bitcoin_first = 1000 / df_test[0:1]['open'].values
+        bitcoin_first = CASH_FIRST / df_test[0:1]['open'].values
         cash_last = bitcoin_first * float(df_test[-1:]['open'].values)
-        percent_win_loss = (cash_last - 1000) / 1000 * 100
+        percent_win_loss = (cash_last - CASH_FIRST) / CASH_FIRST * 100
         print("Without prediction %.2f euros => %.2f%% => %.2f%% / day" % (
-        cash_last, percent_win_loss, float(percent_win_loss / n_days)))
+            cash_last, percent_win_loss, float(percent_win_loss / n_days)))
