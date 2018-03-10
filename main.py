@@ -2,6 +2,7 @@ import cmd
 import sys
 from bitcoin import core
 from bitcoin.gdax_client import GdaxClient
+from bitcoin.order import Order
 
 
 class BitCoinChallenge(cmd.Cmd):
@@ -24,6 +25,10 @@ class BitCoinChallenge(cmd.Cmd):
 
     def do_tick(self, arg):
         print(GdaxClient().current_price('BTC-EUR'))
+
+    def do_account(self, arg):
+        Order().get_accounts_balance()
+
 
 if __name__ == '__main__':
     BitCoinChallenge().onecmd(' '.join(sys.argv[1:]))

@@ -15,3 +15,6 @@ train:
 
 tick:
 	docker run --rm  -v $(PWD):/src bitcoin-challenge python main.py tick
+
+account:
+	docker run --rm  -v $(PWD):/src bitcoin-challenge python main.py account

@@ -1,18 +1,13 @@
 import csv
-from enum import Enum
 import numpy as np
 import pandas as pd
 from . import gdax_client, sentiment
+from bitcoin.order import Order
+from .predition import Prediction
 from datetime import datetime
 
 TEST_SIZE = 0.2
 CASH_FIRST = 200
-
-
-class Order(Enum):
-    STAY = 1
-    DOWN = 2
-    UP = 3
 
 
 class Core:
@@ -63,11 +58,14 @@ class Core:
 
         predict_price = float("%.2f" % scaler_y.inverse_transform(y_predict_r))
 
-        predict_order = Order.DOWN
+        predict_order = Prediction.DOWN
         if last_predict_price < predict_price:
-            predict_order = Order.UP
+            predict_order = Prediction.UP
         elif last_predict_price == predict_price:
-            predict_order = Order.STAY
+            predict_order = Prediction.STAY
+
+        order = Order()
+        order.action(df, price, predict_order)
 
         with open('order_history_%s.csv' % self.product_id, newline='', encoding='utf-8', mode='a') as file:
             writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
@@ -182,17 +180,17 @@ class Core:
             y_predict_r_rescaled = scaler_y.inverse_transform(y_predict_r)
             y_predict_r_rescaled = float("%.2f" % y_predict_r_rescaled)
 
-            predict_order = Order.DOWN
+            predict_order = Prediction.DOWN
             if y_predict_last < y_predict_r_rescaled:
-                predict_order = Order.UP
+                predict_order = Prediction.UP
             elif y_predict_last == y_predict_r_rescaled:
-                predict_order = Order.STAY
+                predict_order = Prediction.STAY
 
-            real_order = Order.DOWN
+            real_order = Prediction.DOWN
             if y_last < row['open']:
-                real_order = Order.UP
+                real_order = Prediction.UP
             elif y_last == row['open']:
-                real_order = Order.STAY
+                real_order = Prediction.STAY
 
             y_predict_last = y_predict_r_rescaled
 
@@ -203,7 +201,7 @@ class Core:
                 last_real_order = real_order
                 continue
 
-            if predict_order == Order.UP:  # and last_real_order == Order.UP:
+            if predict_order == Prediction.UP:  # and last_real_order == Prediction.UP:
                 if cash > 0 and buy is False:
                     previous_cash = cash
                     buy = True
@@ -211,7 +209,7 @@ class Core:
                     cash = 0
                     n_api_call = n_api_call + 1
 
-            elif predict_order == Order.DOWN:  # and last_real_order == Order.DOWN:
+            elif predict_order == Prediction.DOWN:  # and last_real_order == Prediction.DOWN:
                 if cash == 0 and buy is True:
                     anomaly = np.exp(model_anomaly.score(row['volume']))
                     if previous_cash < bitcoin * row['open'] and anomaly > anomaly_limit:
