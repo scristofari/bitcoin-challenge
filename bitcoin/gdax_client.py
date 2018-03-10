@@ -12,5 +12,4 @@ class GdaxClient:
     def current_price(product_id):
         public_client = gdax.PublicClient()
         data = public_client.get_product_ticker(product_id=product_id)
-
         return float(data['price'])

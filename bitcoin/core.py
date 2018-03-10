@@ -26,13 +26,12 @@ class Core:
         state = sentiment.Sentiment()
         state.build()
 
-        currencies = ['BTC-USD', 'BTC-EUR']
-        for c in currencies:
-            rate = self.gdax_client.last_rate(c)
-            with open('%s.csv' % c, newline='', encoding='utf-8', mode='a') as file:
-                writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-                writer.writerow(
-                    rate + state.from_twitter + [state.from_reddit] + [state.from_gnews])
+        self.predict_order(state)
+
+        rate = self.gdax_client.last_rate(self.product_id)
+        with open('%s.csv' % self.product_id, newline='', encoding='utf-8', mode='a') as file:
+            writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            writer.writerow(rate + state.from_twitter + [state.from_reddit] + [state.from_gnews])
 
     def load_data(self):
         import pandas as pd
@@ -73,6 +72,8 @@ class Core:
         with open('order_history_%s.csv' % self.product_id, newline='', encoding='utf-8', mode='a') as file:
             writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
             writer.writerow([price, predict_price, predict_order])
+
+        return [price, predict_price, predict_order]
 
     @staticmethod
     def prepare_inputs_outputs(df):

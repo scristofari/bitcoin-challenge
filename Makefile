@@ -12,3 +12,6 @@ test:
 
 train:
 	docker run --rm  -v $(PWD):/src bitcoin-challenge python main.py train
+
+tick:
+	docker run --rm  -v $(PWD):/src bitcoin-challenge python main.py tick
