@@ -6,8 +6,8 @@ from bitcoin.order import Order
 from .predition import Prediction
 from datetime import datetime
 
-TEST_SIZE = 0.2
-CASH_FIRST = 200
+TEST_SIZE = 0.3
+CASH_FIRST = 1000
 
 
 class Core:

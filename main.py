@@ -24,11 +24,13 @@ class BitCoinChallenge(cmd.Cmd):
         c.test_order_percent()
 
     def do_tick(self, arg):
-        print(GdaxClient().current_price('BTC-EUR'))
+        print(GdaxClient().current_ticker('BTC-EUR'))
 
     def do_account(self, arg):
-        Order().get_accounts_balance()
+        GdaxClient().get_accounts_balance()
 
+    def do_order_book(self, arg):
+        GdaxClient.get_order_book()
 
 if __name__ == '__main__':
     BitCoinChallenge().onecmd(' '.join(sys.argv[1:]))
