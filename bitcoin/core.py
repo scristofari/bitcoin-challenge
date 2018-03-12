@@ -46,7 +46,7 @@ class Core:
         df = self.load_data()
         X_train, X_test, y_train, y_test, scaler_x, scaler_y = Core.prepare_inputs_outputs(df)
 
-        price = self.gdax_client.current_price(self.product_id)
+        price, _ = self.gdax_client.current_ticker(self.product_id)
         model = load_model('./model-%s.h5' % self.product_id)
 
         x_predict = np.array(
@@ -64,8 +64,8 @@ class Core:
         elif last_predict_price == predict_price:
             predict_order = Prediction.STAY
 
-        order = Order()
-        order.action(df, price, predict_order)
+        #order = Order()
+        #order.action(df, price, predict_order)
 
         with open('order_history_%s.csv' % self.product_id, newline='', encoding='utf-8', mode='a') as file:
             writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)

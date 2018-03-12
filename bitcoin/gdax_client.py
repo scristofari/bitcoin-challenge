@@ -1,4 +1,4 @@
-from gdax import gdax
+import gdax
 import time
 
 gdax_key = '4823e9f74b40090a2995b96cd7a22cb6'
