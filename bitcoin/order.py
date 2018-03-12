@@ -34,7 +34,7 @@ class Order:
                 # GdaxClient.buy(price=euros, size=size_buy)
                 with open('order_buy_history_BTC-EUR.csv', newline='', encoding='utf-8', mode='a') as file:
                     writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-                    writer.writerow([price])
+                    writer.writerow([euros])
                 return price
 
         elif order_prediction == Prediction.DOWN:
@@ -43,13 +43,13 @@ class Order:
             except FileNotFoundError:
                 return 0
 
-            last_buy = float(buy_history[-1:]['price'].values)
+            last_euros = float(buy_history[-1:]['price'].values)
 
             price = float(order_book['bids'][0][0])
             size = float(order_book['bids'][0][1])
             size_sell = float(euros / price)
             print('size to sell: %f' % size_sell)
-            if size_sell < size and last_buy < bitcoins * price and last_volume_anomaly > anomaly_limit:
+            if size_sell < size and last_euros < size_sell * price and last_volume_anomaly > anomaly_limit:
                 print('sell at %f with %f size' % (price, size))
                 # GdaxClient.sell(price=euros, size=size_sell)
 
