@@ -21,12 +21,12 @@ class Core:
         state = sentiment.Sentiment()
         state.build()
 
-        #self.predict_order(state)
-
         rate = self.gdax_client.last_rate(self.product_id)
         with open('%s.csv' % self.product_id, newline='', encoding='utf-8', mode='a') as file:
             writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
             writer.writerow(rate + state.from_twitter + [state.from_reddit] + [state.from_gnews])
+
+        self.predict_order(state)
 
     def load_data(self):
         import pandas as pd
