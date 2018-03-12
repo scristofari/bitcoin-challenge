@@ -1,3 +1,5 @@
+import csv
+import pandas as pd
 import numpy as np
 import gdax
 from .predition import Prediction
@@ -25,17 +27,25 @@ class Order:
             size_buy = float(euros / price)
             if size_buy < size:
                 GdaxClient.buy(price=euros, size=size_buy)
-
+                with open('order_buy_history_BTC-EUR.csv', newline='', encoding='utf-8', mode='a') as file:
+                    writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+                    writer.writerow([price])
+                return price
 
         elif order_prediction == Prediction.DOWN:
+            buy_history = pd.read_csv('order_buy_history_BTC-EUR.csv', names=['price'])
+            last_buy = float(buy_history[-1:]['price'].values)
+
             price = order_book['bids']['price']
             size = order_book['bids']['size']
             size_sell = float(euros / price)
             if size_sell > size:
                 size_sell = size
 
-            if 0 < bitcoins * price and last_volume_anomaly > anomaly_limit:
+            if last_buy < bitcoins * price and last_volume_anomaly > anomaly_limit:
                 GdaxClient.sell(price=euros, size=size_sell)
 
             if last_volume_anomaly < anomaly_limit:
                 GdaxClient.sell(price=euros, size=size_sell)
+
+        return 0
