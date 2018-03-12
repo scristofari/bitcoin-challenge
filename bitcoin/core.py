@@ -152,7 +152,11 @@ class Core:
         from keras.models import load_model
         from sklearn.externals import joblib
 
-        df = self.load_data()
+        try:
+            df = self.load_data()
+        except FileNotFoundError:
+            raise NameError('No data')
+
         _, _, _, _, scaler_x, scaler_y = Core.prepare_inputs_outputs(df)
         model = load_model('./model-%s.h5' % self.product_id)
         model_anomaly = joblib.load('./model-anomaly-%s.pkl' % self.product_id)

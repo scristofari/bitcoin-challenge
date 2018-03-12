@@ -33,7 +33,11 @@ class Order:
                 return price
 
         elif order_prediction == Prediction.DOWN:
-            buy_history = pd.read_csv('order_buy_history_BTC-EUR.csv', names=['price'])
+            try:
+                buy_history = pd.read_csv('order_buy_history_BTC-EUR.csv', names=['price'])
+            except FileNotFoundError:
+                return 0
+
             last_buy = float(buy_history[-1:]['price'].values)
 
             price = order_book['bids']['price']
