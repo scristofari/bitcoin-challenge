@@ -6,7 +6,7 @@ gdax_secret = '95nGkm6XklHwCfGgJ+krvnwBTXk1NO02QZWbjJ4Aasn6EKGaWMYTkyjAIbhrvhiWJ
 gdax_passphrase = '34hpnoe3zhp'
 
 
-class GdaxClient:
+class GdaxClient():
     @staticmethod
     def last_rate(product_id, granularity=60):
         public_client = gdax.PublicClient()
@@ -38,3 +38,15 @@ class GdaxClient:
         order_book.start()
         time.sleep(10)
         order_book.close()
+
+    @staticmethod
+    def buy(product_id='BTC_EUR', price=0, size=0):
+        gc = gdax.AuthenticatedClient(gdax_key, gdax_secret, gdax_passphrase)
+
+        return gc.buy(product_id=product_id, size=size, price=price, type='limit')
+
+    @staticmethod
+    def sell(product_id='BTC_EUR', price=0, size=0):
+        gc = gdax.AuthenticatedClient(gdax_key, gdax_secret, gdax_passphrase)
+
+        return gc.sell(product_id=product_id, size=size, price=price, type='limit')

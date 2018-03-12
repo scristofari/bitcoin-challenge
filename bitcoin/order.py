@@ -1,28 +1,42 @@
 import numpy as np
+import gdax
 from .predition import Prediction
 from .gdax_client import GdaxClient
 
 
 class Order:
 
-    def action(self, df, order_prediction):
+    @staticmethod
+    def action(df, order_prediction):
         from sklearn.externals import joblib
 
         last_history = df[-1:]
         last_volume = float(last_history['volume'].values)
-
-        gc = GdaxClient()
-        ticker = gc.current_ticker('BTC-EUR')
-        euros, bitcoins = GdaxClient().get_accounts_balance()
-
         model_anomaly = joblib.load('./model-anomaly-BTC-EUR.pkl')
-        anomaly_limit = np.exp(model_anomaly.score(np.percentile(df['volume'].values, 75)))
+        anomaly_limit = np.exp(model_anomaly.score(np.percentile(last_volume, 75)))
+        last_volume_anomaly = np.exp(model_anomaly.score(last_volume))
 
-        if order_prediction == Prediction.UP and euros > 10:
-            # BUY
-            pass
+        euros, bitcoins = GdaxClient().get_accounts_balance()
+        order_book = gdax.PublicClient().get_product_order_book(product_id='BTC-EUR', level=1)
+
+        if order_prediction == Prediction.UP and euros > 10.0:
+            price = order_book['asks']['price']
+            size = order_book['asks']['size']
+
+            size_buy = float(euros / price)
+            if size_buy > size:
+                size_buy = size
+
+            GdaxClient.buy(price=euros, size=size_buy)
+
         elif order_prediction == Prediction.DOWN:
-            # SELL
-            anomaly = np.exp(model_anomaly.score(last_volume))
-            if 0 < bitcoins * price and anomaly > anomaly_limit:
-                pass
+            price = order_book['bids']['price']
+            size = order_book['bids']['size']
+            size_sell = float(euros / price)
+            if size_sell > size:
+                size_sell = size
+
+            if 0 < bitcoins * price and last_volume_anomaly > anomaly_limit:
+                GdaxClient.sell(price=euros, size=size_sell)
+            if last_volume_anomaly < anomaly_limit:
+                GdaxClient.sell(price=euros, size=size_sell)

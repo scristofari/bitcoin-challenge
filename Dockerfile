@@ -8,4 +8,6 @@ COPY . /src
 RUN pip install -r requirements.txt
 RUN python -m textblob.download_corpora
 
+RUN pip install gdax
+
 CMD python main.py spot
