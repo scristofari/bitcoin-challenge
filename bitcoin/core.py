@@ -46,7 +46,8 @@ class Core:
         df = self.load_data()
         X_train, X_test, y_train, y_test, scaler_x, scaler_y = Core.prepare_inputs_outputs(df)
 
-        price, _ = self.gdax_client.current_ticker(self.product_id)
+        data = self.gdax_client.current_ticker(self.product_id)
+        price = data['price']
         model = load_model('./model-%s.h5' % self.product_id)
 
         x_predict = np.array(

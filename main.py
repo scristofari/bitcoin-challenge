@@ -31,7 +31,9 @@ class BitCoinChallenge(cmd.Cmd):
         print(GdaxClient().get_accounts_balance())
 
     def do_order_book(self, arg):
-        print(gdax.PublicClient().get_product_order_book(product_id='BTC-EUR', level=1))
+        order_book = gdax.PublicClient().get_product_order_book(product_id='BTC-EUR', level=1)
+        print("Asks %s" % order_book['asks'][0][0])
+
 
 if __name__ == '__main__':
     BitCoinChallenge().onecmd(' '.join(sys.argv[1:]))

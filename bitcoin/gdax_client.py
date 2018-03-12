@@ -30,7 +30,7 @@ class GdaxClient():
             if a['currency'] == 'EUR':
                 euros = a['available']
 
-        return euros, bitcoins
+        return float(euros), float(bitcoins)
 
     @staticmethod
     def get_order_book():
