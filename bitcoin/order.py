@@ -22,12 +22,10 @@ class Order:
         if order_prediction == Prediction.UP and euros > 10.0:
             price = order_book['asks']['price']
             size = order_book['asks']['size']
-
             size_buy = float(euros / price)
-            if size_buy > size:
-                size_buy = size
+            if size_buy < size:
+                GdaxClient.buy(price=euros, size=size_buy)
 
-            GdaxClient.buy(price=euros, size=size_buy)
 
         elif order_prediction == Prediction.DOWN:
             price = order_book['bids']['price']
@@ -38,5 +36,6 @@ class Order:
 
             if 0 < bitcoins * price and last_volume_anomaly > anomaly_limit:
                 GdaxClient.sell(price=euros, size=size_sell)
+
             if last_volume_anomaly < anomaly_limit:
                 GdaxClient.sell(price=euros, size=size_sell)

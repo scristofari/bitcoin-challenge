@@ -21,7 +21,7 @@ class Core:
         state = sentiment.Sentiment()
         state.build()
 
-        self.predict_order(state)
+        #self.predict_order(state)
 
         rate = self.gdax_client.last_rate(self.product_id)
         with open('%s.csv' % self.product_id, newline='', encoding='utf-8', mode='a') as file:
@@ -64,8 +64,8 @@ class Core:
         elif last_predict_price == predict_price:
             predict_order = Prediction.STAY
 
-        #order = Order()
-        #order.action(df, price, predict_order)
+        order = Order()
+        order.action(df, predict_order)
 
         with open('order_history_%s.csv' % self.product_id, newline='', encoding='utf-8', mode='a') as file:
             writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
