@@ -15,14 +15,12 @@ class Order:
         last_history = df[-1:]
         last_volume = float(last_history['volume'].values)
         model_anomaly = joblib.load('./model-anomaly-BTC-EUR.pkl')
-        anomaly_limit = np.exp(model_anomaly.score(np.percentile(last_volume, 75)))
+        anomaly_limit = np.exp(model_anomaly.score(np.percentile(df['volume'].values, 75)))
         last_volume_anomaly = np.exp(model_anomaly.score(last_volume))
 
         euros, bitcoins = GdaxClient().get_accounts_balance()
         order_book = gdax.PublicClient().get_product_order_book(product_id='BTC-EUR', level=1)
 
-        euros = 100
-        order_prediction = Prediction.DOWN
         print('[Balance] euros: %f bitcoins %f' % (euros, bitcoins))
         if order_prediction == Prediction.UP and euros > 10.0:
             price = float(order_book['asks'][0][0])
@@ -48,12 +46,12 @@ class Order:
             price = float(order_book['bids'][0][0])
             size = float(order_book['bids'][0][1])
             size_sell = float(euros / price)
-            print('size to sell: %f' % size_sell)
+            print('sell at %f with %f size' % (price, size))
             if size_sell < size and last_euros < size_sell * price and last_volume_anomaly > anomaly_limit:
                 print('sell at %f with %f size' % (price, size))
                 # GdaxClient.sell(price=euros, size=size_sell)
 
-            if last_volume_anomaly < anomaly_limit:
+            elif last_volume_anomaly < anomaly_limit:
                 print('[ANOMALY] sell at %f with %f size' % (price, size))
                 # GdaxClient.sell(price=euros, size=size_sell)
 

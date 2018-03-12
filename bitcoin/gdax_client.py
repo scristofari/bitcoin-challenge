@@ -33,13 +33,6 @@ class GdaxClient():
         return float(euros), float(bitcoins)
 
     @staticmethod
-    def get_order_book():
-        order_book = gdax.OrderBook(product_id='BTC-USD')
-        order_book.start()
-        time.sleep(10)
-        order_book.close()
-
-    @staticmethod
     def buy(product_id='BTC_EUR', price=0, size=0):
         gc = gdax.AuthenticatedClient(gdax_key, gdax_secret, gdax_passphrase)
 
