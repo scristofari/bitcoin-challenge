@@ -51,7 +51,7 @@ class Order:
             # size_sell = float(euros / price)
             # print('sell at %f with %f size' % (price, size))
 
-            if last_euros < bitcoins * price and last_volume_anomaly > anomaly_limit:
+            if last_euros < bitcoins * price:
                 print('sell at %f with %f size' % (price, bitcoins))
                 # GdaxClient.sell(product_id='BTC-EUR', type='market', size=bitcoins)
 
