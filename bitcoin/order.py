@@ -11,8 +11,8 @@ class Order:
     def action(df, order_prediction):
         from sklearn.externals import joblib
 
-        last_history = df[-1:]
-        last_volume = float(last_history['volume'].values)
+        last_volume = float(df[-1:]['volume'])
+        print(last_volume)
         model_anomaly = joblib.load('./model-anomaly-BTC-EUR.pkl')
         anomaly_limit = np.exp(model_anomaly.score(np.percentile(df['volume'].values, 75)))
         last_volume_anomaly = np.exp(model_anomaly.score(last_volume))
