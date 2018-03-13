@@ -1,6 +1,5 @@
 import cmd
 import sys
-import gdax
 from bitcoin import core
 from bitcoin.gdax_client import GdaxClient
 
@@ -24,13 +23,13 @@ class BitCoinChallenge(cmd.Cmd):
         c.test_order_percent()
 
     def do_tick(self, arg):
-        print(GdaxClient().current_ticker('BTC-EUR'))
+        print(GdaxClient().get_product_ticker('BTC-EUR'))
 
     def do_account(self, arg):
         print(GdaxClient().get_accounts_balance())
 
     def do_order_book(self, arg):
-        order_book = gdax.PublicClient().get_product_order_book(product_id='BTC-EUR', level=1)
+        order_book = GdaxClient().get_product_order_book(product_id='BTC-EUR', level=1)
         print("Asks %s" % order_book['asks'][0][0])
 
 
