@@ -20,7 +20,9 @@ class Sentiment:
         self.build_from_gnews()
         self.build_from_reddit()
         self.build_from_twitter()
-        
+
+        return self
+
     def build_from_gnews(self):
         r = requests.get('https://finance.google.com/finance/company_news?q=currency:btc&output=json')
         resp = r.json()
