@@ -40,8 +40,8 @@ class Core:
 
         history = pd.read_csv('order_history_%s.csv' % self.product_id,
                               names=['price', 'predict_price', 'predict_order'])
-        last_history = history[-1:]
-        last_predict_price = float(last_history['predict_price'].values)
+
+        last_predict_price = float(history[-1:]['predict_price'])
 
         df = self.load_data()
         _, _, _, _, scaler_x, scaler_y = Core.prepare_inputs_outputs(df)
@@ -65,8 +65,7 @@ class Core:
         elif last_predict_price == predict_price:
             predict_order = Prediction.STAY
 
-        order = Order()
-        order.action(df, predict_order)
+        Order().action(df, predict_order)
 
         with open('order_history_%s.csv' % self.product_id, newline='', encoding='utf-8', mode='a') as file:
             writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
