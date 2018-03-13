@@ -1,7 +1,8 @@
 import csv
 import numpy as np
 import pandas as pd
-from . import gdax_client, sentiment
+from .gdax_client import GdaxClient
+from .sentiment import Sentiment
 from bitcoin.order import Order
 from .predition import Prediction
 from datetime import datetime
@@ -11,22 +12,21 @@ CASH_FIRST = 1000
 
 
 class Core:
-    gdax_client = gdax_client.GdaxClient()
+    gdax_client = GdaxClient()
     product_id = None
 
     def __init__(self, product_id='BTC-EUR'):
         self.product_id = product_id
 
     def generate_spot_data(self):
-        state = sentiment.Sentiment()
-        state.build()
-
+        state = Sentiment().build()
         rate = self.gdax_client.last_rate(self.product_id)
+
         with open('%s.csv' % self.product_id, newline='', encoding='utf-8', mode='a') as file:
             writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
             writer.writerow(rate + state.from_twitter + [state.from_reddit] + [state.from_gnews])
 
-        #self.predict_order(state)
+        # self.predict_order(state)
 
     def load_data(self):
         import pandas as pd
@@ -44,9 +44,9 @@ class Core:
         last_predict_price = float(last_history['predict_price'].values)
 
         df = self.load_data()
-        X_train, X_test, y_train, y_test, scaler_x, scaler_y = Core.prepare_inputs_outputs(df)
+        _, _, _, _, scaler_x, scaler_y = Core.prepare_inputs_outputs(df)
 
-        data = self.gdax_client.current_ticker(self.product_id)
+        data = self.gdax_client.get_product_ticker(self.product_id)
         price = data['price']
         model = load_model('./model-%s.h5' % self.product_id)
 
