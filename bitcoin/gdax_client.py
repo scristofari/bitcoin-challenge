@@ -33,13 +33,19 @@ class GdaxClient():
         return float(euros), float(bitcoins)
 
     @staticmethod
-    def buy(product_id='BTC_EUR', price=0, size=0):
+    def buy(product_id='BTC-EUR', price=0, size=0):
         gc = gdax.AuthenticatedClient(gdax_key, gdax_secret, gdax_passphrase)
 
         return gc.buy(product_id=product_id, size=size, price=price, type='limit')
 
     @staticmethod
-    def sell(product_id='BTC_EUR', price=0, size=0):
+    def sell(product_id='BTC-EUR', price=0, size=0):
         gc = gdax.AuthenticatedClient(gdax_key, gdax_secret, gdax_passphrase)
 
         return gc.sell(product_id=product_id, size=size, price=price, type='limit')
+
+    @staticmethod
+    def cancel_all_orders(product_id='BTC-EUR'):
+        gc = gdax.AuthenticatedClient(gdax_key, gdax_secret, gdax_passphrase)
+
+        return gc.cancel_all(product_id=product_id)

@@ -3,7 +3,6 @@ import sys
 import gdax
 from bitcoin import core
 from bitcoin.gdax_client import GdaxClient
-from bitcoin.order import Order
 
 
 class BitCoinChallenge(cmd.Cmd):

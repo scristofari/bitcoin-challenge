@@ -217,7 +217,8 @@ class Core:
             elif predict_order == Prediction.DOWN:  # and last_real_order == Prediction.DOWN:
                 if cash == 0 and buy is True:
                     anomaly = np.exp(model_anomaly.score(row['volume']))
-                    if previous_cash < bitcoin * row['open'] and anomaly > anomaly_limit:
+                    plus06 = int(((previous_cash * 0.6) / 100))
+                    if previous_cash + plus06 < bitcoin * row['open'] and anomaly > anomaly_limit:
                         buy = False
                         cash = bitcoin * row['open']
                         bitcoin = 0
