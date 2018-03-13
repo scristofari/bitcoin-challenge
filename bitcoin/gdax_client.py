@@ -17,10 +17,9 @@ class GdaxClient(AuthenticatedClient):
         accounts = self.get_accounts()
         euros = bitcoins = None
         for a in accounts:
-            # print("Currency %s => Balance %f => Available => %f" % (a['currency'], float(a['balance']), float(a['available'])))
             if a['currency'] == 'BTC':
-                bitcoins = a['available']
+                bitcoins = float(a['available'])
             if a['currency'] == 'EUR':
-                euros = a['available']
+                euros = float(a['available'])
 
-        return float(euros), float(bitcoins)
+        return euros, bitcoins
