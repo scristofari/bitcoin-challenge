@@ -65,7 +65,7 @@ class Core:
         elif last_predict_price == predict_price:
             predict_order = Prediction.STAY
 
-        Order().action(df, predict_order)
+        Order.action(df, predict_order)
 
         with open('order_history_%s.csv' % self.product_id, newline='', encoding='utf-8', mode='a') as file:
             writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
