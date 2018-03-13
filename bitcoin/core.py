@@ -69,7 +69,7 @@ class Core:
             writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
             writer.writerow([price, predict_price, predict_order])
 
-        Order.action(df, predict_order)
+        Order().action_limit(df, predict_order)
 
     @staticmethod
     def prepare_inputs_outputs(df):
