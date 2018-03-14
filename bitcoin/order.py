@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from .predition import Prediction
 from .gdax_client import GdaxClient
+from .log import logger
 
 
 class Order:
@@ -18,8 +19,6 @@ class Order:
         last_volume_anomaly = np.exp(model_anomaly.score(last_volume))
 
         euros, bitcoins = GdaxClient().get_accounts_balance()
-
-        print('[Balance] euros: %f bitcoins %f' % (euros, bitcoins))
 
         data = GdaxClient().get_product_ticker('BTC-EUR')
         price = float(data['price'])
@@ -42,15 +41,15 @@ class Order:
             price = float(data['price'])
 
             if last_price < price:
-                print('sell at %f with %f size' % (price, bitcoins))
+                logger.info('sell at %f with %f size' % (price, bitcoins))
                 # GdaxClient.sell(product_id='BTC-EUR', type='market', size=bitcoins)
 
             elif last_volume_anomaly < anomaly_limit:
-                print('[ANOMALY] sell at %f with %f size' % (price, bitcoins))
+                logger.info('[ANOMALY] sell at %f with %f size' % (price, bitcoins))
                 # GdaxClient.sell(product_id='BTC-EUR', type='market', size=bitcoins)
 
         else:
-            print('Do nothing')
+            logger.info('Do nothing')
 
         return 0
 
@@ -58,8 +57,8 @@ class Order:
         from sklearn.externals import joblib
 
         last_volume = float(df[-1:]['volume'])
-        last_price = float(df[-1:]['price'])
-        last_price_n2 = float(df[-2:-1]['price'])
+        last_price = float(df[-1:]['close'])
+        last_price_n2 = float(df[-2:-1]['close'])
         model_anomaly = joblib.load('./model-anomaly-BTC-EUR.pkl')
         anomaly_limit = np.exp(model_anomaly.score(np.percentile(df['volume'].values, 75)))
         last_volume_anomaly = np.exp(model_anomaly.score(last_volume))
@@ -68,27 +67,27 @@ class Order:
             self.gdax_client.cancel_all(product_id='BTC-EUR')
 
         euros, bitcoins = GdaxClient().get_accounts_balance()
-        print('[Balance] euros: %f bitcoins %f' % (euros, bitcoins))
+
         order_book = self.gdax_client.get_product_order_book(product_id='BTC-EUR', level=1)
 
         if last_volume_anomaly < anomaly_limit and last_price < last_price_n2:
             price = float(order_book['bids'][0][0])
-            print('[ANOMALY] sell at %f with %f size' % (price, bitcoins))
+            logger.info('[ANOMALY] sell at %f with %f size' % (price, bitcoins))
             # GdaxClient.sell(product_id='BTC-EUR', type='limit', price=price, size=bitcoins)
 
-        elif order_prediction == Prediction.UP and euros > 10.0:
+        elif order_prediction == Prediction.UP and euros > 10:
             price = float(order_book['asks'][0][0])
             size = float(order_book['asks'][0][1])
             size_buy = float(euros / price)
             if size_buy < size:
-                pass
+                logger.info('buy at %f with %f euros' % (price, euros))
                 # self.gdax_client.buy(product_id='BTC-EUR', type='limit', price=price, size=size_buy)
 
                 with open('order_buy_history_BTC-EUR.csv', newline='', encoding='utf-8', mode='a') as file:
                     writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
                     writer.writerow([price])
 
-        elif order_prediction == Prediction.DOWN:
+        elif order_prediction == Prediction.DOWN and bitcoins > 0:
             try:
                 buy_history = pd.read_csv('order_buy_history_BTC-EUR.csv', names=['price'])
             except FileNotFoundError:
@@ -98,10 +97,10 @@ class Order:
             price = float(order_book['bids'][0][0])
             size = float(order_book['bids'][0][1])
             if last_price < price and bitcoins < size:
-                print('sell at %f with %f size' % (price, bitcoins))
+                logger.info('sell at %f with %f size' % (price, bitcoins))
                 # GdaxClient.sell(product_id='BTC-EUR', type='limit', price=price, size=bitcoins)
 
         else:
-            print('Do nothing')
+            logger.info('Do nothing')
 
         return 0

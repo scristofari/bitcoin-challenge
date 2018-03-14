@@ -6,6 +6,7 @@ from .sentiment import Sentiment
 from bitcoin.order import Order
 from .predition import Prediction
 from datetime import datetime
+from bitcoin.log import logger
 
 TEST_SIZE = 0.3
 CASH_FIRST = 1000
@@ -26,9 +27,10 @@ class Core:
             writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
             writer.writerow(rate + state.from_twitter + [state.from_reddit] + [state.from_gnews])
 
-        #self.predict_order(state)
+        self.predict_order(state)
 
     def load_data(self):
+        logger.info('Load data from CSV.')
         import pandas as pd
         return pd.read_csv('%s.csv' % self.product_id,
                            names=['time', 'low', 'high', 'open', 'close', 'volume', 'tw_sentiment', 'tw_followers',
@@ -234,24 +236,24 @@ class Core:
             last_real_order = real_order
 
         percent = (n_error / count_test) * 100
-        print("Error Order percentage: %0.2f%%" % percent)
+        logger.info("Error Order percentage: %0.2f%%" % percent)
 
         if cash == 0:
             cash = (bitcoin * y_last)
 
         from_date = datetime.fromtimestamp(df_test[0:1]['time'].values).strftime('%Y-%m-%d %H:%M:%S')
         to_date = datetime.fromtimestamp(df_test[-1:]['time'].values).strftime('%Y-%m-%d %H:%M:%S')
-        print("TEST From %s to %s" % (from_date, to_date))
+        logger.info("TEST From %s to %s" % (from_date, to_date))
 
         percent_predict_win_loss = (cash - CASH_FIRST) / CASH_FIRST * 100
         n_days = int(count_test / 1440)
-        print("Number of api calls: %.2f / min" % float(n_api_call / count_test))
-        print("Number of anomalies: %d" % n_anomalies)
-        print("With prediction %.2f euros => %.2f%% => %.2f%% / day" % (
+        logger.info("Number of api calls: %.2f / min" % float(n_api_call / count_test))
+        logger.info("Number of anomalies: %d" % n_anomalies)
+        logger.info("With prediction %.2f euros => %.2f%% => %.2f%% / day" % (
             cash, percent_predict_win_loss, float(percent_predict_win_loss / n_days)))
 
         bitcoin_first = CASH_FIRST / df_test[0:1]['open'].values
         cash_last = bitcoin_first * float(df_test[-1:]['open'].values)
         percent_win_loss = (cash_last - CASH_FIRST) / CASH_FIRST * 100
-        print("Without prediction %.2f euros => %.2f%% => %.2f%% / day" % (
+        logger.info("Without prediction %.2f euros => %.2f%% => %.2f%% / day" % (
             cash_last, percent_win_loss, float(percent_win_loss / n_days)))

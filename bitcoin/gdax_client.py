@@ -1,4 +1,5 @@
 from gdax import AuthenticatedClient
+from .log import logger
 
 gdax_key = '4823e9f74b40090a2995b96cd7a22cb6'
 gdax_secret = '95nGkm6XklHwCfGgJ+krvnwBTXk1NO02QZWbjJ4Aasn6EKGaWMYTkyjAIbhrvhiWJ/ZJY/MsCsWRI/wyZV5r7Q=='
@@ -11,6 +12,7 @@ class GdaxClient(AuthenticatedClient):
 
     def last_rate(self, product_id, granularity=60):
         rates = self.get_product_historic_rates(product_id=product_id, granularity=granularity)
+        logger.info("Get the last rates => %s", rates[0])
         return rates[0]
 
     def get_accounts_balance(self):
@@ -22,4 +24,5 @@ class GdaxClient(AuthenticatedClient):
             if a['currency'] == 'EUR':
                 euros = float(a['available'])
 
+        logger.info('[Balance] euros: %f bitcoins %f' % (euros, bitcoins))
         return euros, bitcoins

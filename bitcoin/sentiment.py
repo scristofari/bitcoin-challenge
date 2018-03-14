@@ -4,6 +4,7 @@ import numpy as np
 from textblob import TextBlob
 import tweepy
 import re
+from .log import logger
 
 consumer_key = 'ZF9flFkwQH3vpGZstOteQDe3n'
 consumer_secret = 'Z8xk8yrVVHK8EkOKN7NpcJ9c8XJVlMyLQRuAw8aZ5W4B7ovNsT'
@@ -17,6 +18,7 @@ class Sentiment:
     from_twitter = []
 
     def build(self):
+        logger.info('Build sentiment analysis.')
         self.build_from_gnews()
         self.build_from_reddit()
         self.build_from_twitter()
