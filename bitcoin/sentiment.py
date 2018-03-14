@@ -18,10 +18,11 @@ class Sentiment:
     from_twitter = []
 
     def build(self):
-        logger.info('Build sentiment analysis.')
         self.build_from_gnews()
         self.build_from_reddit()
         self.build_from_twitter()
+
+        logger.info('Build sentiment analysis => [%s, %s, %s]' % (self.from_gnews, self.from_reddit, self.from_twitter))
 
         return self
 

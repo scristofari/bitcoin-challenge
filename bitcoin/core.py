@@ -27,7 +27,7 @@ class Core:
             writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
             writer.writerow(rate + state.from_twitter + [state.from_reddit] + [state.from_gnews])
 
-        self.predict_order(state)
+        # self.predict_order(state)
 
     def load_data(self):
         logger.info('Load data from CSV.')
