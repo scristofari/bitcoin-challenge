@@ -15,9 +15,11 @@ CASH_FIRST = 1000
 class Core:
     gdax_client = GdaxClient()
     product_id = None
+    env = None
 
-    def __init__(self, product_id='BTC-EUR'):
+    def __init__(self, product_id='BTC-EUR', env='test'):
         self.product_id = product_id
+        self.env = env
 
     def generate_spot_data(self):
         state = Sentiment().build()
@@ -75,7 +77,7 @@ class Core:
             writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
             writer.writerow([price, predict_price, predict_order])
 
-        Order().action_limit(df, predict_order)
+        Order(env=self.env).action_limit(df, predict_order)
 
     @staticmethod
     def prepare_inputs_outputs(df):

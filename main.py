@@ -8,7 +8,7 @@ class BitCoinChallenge(cmd.Cmd):
     def do_spot(self, arg):
         import time
         t0 = time.time()
-        c = core.Core()
+        c = core.Core(env=arg)
         c.generate_spot_data()
         t1 = time.time()
         print("Execution time : %d s" % (t1 - t0))
