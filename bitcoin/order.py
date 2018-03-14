@@ -30,7 +30,7 @@ class Order:
                 writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
                 writer.writerow([price])
 
-        elif order_prediction == Prediction.DOWN:
+        elif order_prediction == Prediction.DOWN and bitcoins > 0:
             try:
                 buy_history = pd.read_csv('order_buy_history_BTC-EUR.csv', names=['price'])
             except FileNotFoundError:
@@ -41,11 +41,11 @@ class Order:
             price = float(data['price'])
 
             if last_price < price:
-                logger.info('sell at %f with %f size' % (price, bitcoins))
+                logger.info('sell at %.2f with %.2f size' % (price, bitcoins))
                 # GdaxClient.sell(product_id='BTC-EUR', type='market', size=bitcoins)
 
             elif last_volume_anomaly < anomaly_limit:
-                logger.info('[ANOMALY] sell at %f with %f size' % (price, bitcoins))
+                logger.info('[ANOMALY] sell at %.2f with %.2f size' % (price, bitcoins))
                 # GdaxClient.sell(product_id='BTC-EUR', type='market', size=bitcoins)
 
         else:
@@ -70,9 +70,10 @@ class Order:
 
         order_book = self.gdax_client.get_product_order_book(product_id='BTC-EUR', level=1)
 
-        if last_volume_anomaly < anomaly_limit and last_price < last_price_n2:
+        if last_volume_anomaly < anomaly_limit and last_price < last_price_n2 and bitcoins > 0:
             price = float(order_book['bids'][0][0])
-            logger.info('[ANOMALY] sell at %f with %f size' % (price, bitcoins))
+            logger.info('[ANOMALY] sell at %.2f with %.2f size' % (price, bitcoins))
+
             # GdaxClient.sell(product_id='BTC-EUR', type='limit', price=price, size=bitcoins)
 
         elif order_prediction == Prediction.UP and euros > 10:
@@ -80,7 +81,8 @@ class Order:
             size = float(order_book['asks'][0][1])
             size_buy = float(euros / price)
             if size_buy < size:
-                logger.info('buy at %f with %f euros' % (price, euros))
+                logger.info('buy at %.2f with %.2f euros' % (price, euros))
+
                 # self.gdax_client.buy(product_id='BTC-EUR', type='limit', price=price, size=size_buy)
 
                 with open('order_buy_history_BTC-EUR.csv', newline='', encoding='utf-8', mode='a') as file:
@@ -97,7 +99,8 @@ class Order:
             price = float(order_book['bids'][0][0])
             size = float(order_book['bids'][0][1])
             if last_price < price and bitcoins < size:
-                logger.info('sell at %f with %f size' % (price, bitcoins))
+                logger.info('sell at %.2f with %.2f size' % (price, bitcoins))
+
                 # GdaxClient.sell(product_id='BTC-EUR', type='limit', price=price, size=bitcoins)
 
         else:

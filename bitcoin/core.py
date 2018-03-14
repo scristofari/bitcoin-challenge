@@ -44,7 +44,7 @@ class Core:
         _, _, _, _, scaler_x, scaler_y = Core.prepare_inputs_outputs(df)
 
         data = self.gdax_client.get_product_ticker(self.product_id)
-        price = data['price']
+        price = float(data['price'])
 
         try:
             history = pd.read_csv('order_history_%s.csv' % self.product_id,
