@@ -28,6 +28,9 @@ class Sentiment:
 
     def build_from_gnews(self):
         r = requests.get('https://finance.google.com/finance/company_news?q=currency:btc&output=json')
+        if r.status_code > 200:
+            logger.error('Status -> %d -> Message %s' % (r.status_code, r.text))
+            raise Exception(r.text)
         resp = r.json()
         df = pd.DataFrame(columns=['polarity'])
         for p in resp['clusters']:
@@ -44,6 +47,9 @@ class Sentiment:
         r = requests.get('https://www.reddit.com/r/bitcoin/hot.json', headers={
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'
         })
+        if r.status_code > 200:
+            logger.error('Status -> %d -> Message %s' % (r.status_code, r.text))
+            raise Exception(r.text)
         list = r.json()
         posts = list['data']['children']
         df = pd.DataFrame(columns=['polarity'])

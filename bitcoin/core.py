@@ -8,7 +8,7 @@ from .predition import Prediction
 from datetime import datetime
 from bitcoin.log import logger
 
-TEST_SIZE = 0.3
+TEST_SIZE = 0.2
 CASH_FIRST = 1000
 
 
@@ -27,7 +27,7 @@ class Core:
             writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
             writer.writerow(rate + state.from_twitter + [state.from_reddit] + [state.from_gnews])
 
-        # self.predict_order(state)
+        self.predict_order(state)
 
     def load_data(self):
         logger.info('Load data from CSV.')
@@ -40,16 +40,20 @@ class Core:
     def predict_order(self, state):
         from keras.models import load_model
 
-        history = pd.read_csv('order_history_%s.csv' % self.product_id,
-                              names=['price', 'predict_price', 'predict_order'])
-
-        last_predict_price = float(history[-1:]['predict_price'])
-
         df = self.load_data()
         _, _, _, _, scaler_x, scaler_y = Core.prepare_inputs_outputs(df)
 
         data = self.gdax_client.get_product_ticker(self.product_id)
         price = data['price']
+
+        try:
+            history = pd.read_csv('order_history_%s.csv' % self.product_id,
+                                  names=['price', 'predict_price', 'predict_order'])
+
+            last_predict_price = float(history[-1:]['predict_price'])
+        except FileNotFoundError:
+            last_predict_price = price
+
         model = load_model('./model-%s.h5' % self.product_id)
 
         x_predict = np.array(
@@ -95,6 +99,8 @@ class Core:
         return X_train, X_test, y_train, y_test, scaler_x, scaler_y
 
     def train(self):
+        logger.info('Train Model')
+
         from keras import regularizers
         from keras.models import Sequential
         from keras.layers import Dense
@@ -133,6 +139,9 @@ class Core:
         return history
 
     def train_anomaly(self):
+
+        logger.info('Train Anomaly Model')
+
         from sklearn.neighbors import KernelDensity
         from sklearn.externals import joblib
         from sklearn.model_selection import GridSearchCV
