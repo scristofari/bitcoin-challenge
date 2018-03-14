@@ -59,7 +59,7 @@ class Order:
 
         last_volume = float(df[-1:]['volume'])
         last_price = float(df[-1:]['price'])
-        last_price_n2 = float(df[-2:-1]['volume'])
+        last_price_n2 = float(df[-2:-1]['price'])
         model_anomaly = joblib.load('./model-anomaly-BTC-EUR.pkl')
         anomaly_limit = np.exp(model_anomaly.score(np.percentile(df['volume'].values, 75)))
         last_volume_anomaly = np.exp(model_anomaly.score(last_volume))
