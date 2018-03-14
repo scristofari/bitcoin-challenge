@@ -165,7 +165,7 @@ class Core:
         buy = False
         cash = CASH_FIRST
         previous_cash = bitcoin = n_error = n_anomalies = n_api_call = 0
-        last_real_order = y_predict_last = y_last = None
+        last_volume = last_real_order = y_predict_last = y_last = None
 
         count = df['open'].count()
         n_test = int(TEST_SIZE * count)
@@ -175,6 +175,8 @@ class Core:
 
             if y_predict_last is None:
                 y_predict_last = y_last = row['open']
+            if last_volume is None:
+                last_volume = row['volume']
 
             x_predict = np.array([row['open'], row['reddit_sentiment'], row['tw_sentiment'], row['tw_followers'],
                                   row['google_sentiment']]).reshape(1, -1)
@@ -205,7 +207,7 @@ class Core:
                 last_real_order = real_order
                 continue
 
-            anomaly = np.exp(model_anomaly.score(row['volume']))
+            anomaly = np.exp(model_anomaly.score(last_volume))
             if cash == 0 and buy is True and anomaly < anomaly_limit and real_order == Prediction.DOWN:
                 n_anomalies = n_anomalies + 1
                 buy = False
@@ -216,7 +218,7 @@ class Core:
                 last_real_order = real_order
                 continue
 
-            if predict_order == Prediction.UP:  # and last_real_order == Prediction.UP:
+            elif predict_order == Prediction.UP:  # and last_real_order == Prediction.UP:
                 if cash > 0 and buy is False:
                     previous_cash = cash
                     buy = True
@@ -233,6 +235,7 @@ class Core:
                         n_api_call = n_api_call + 1
 
             y_last = row['open']
+            last_volume = row['volume']
             last_real_order = real_order
 
         percent = (n_error / count_test) * 100
