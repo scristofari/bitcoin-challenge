@@ -62,13 +62,13 @@ class Order:
         anomaly_limit = np.exp(model_anomaly.score(np.percentile(df['volume'].values, 75)))
         last_volume_anomaly = np.exp(model_anomaly.score(last_volume))
 
-        euros, bitcoins = GdaxClient().get_accounts_balance()
-        order_book = self.gdax_client.get_product_order_book(product_id='BTC-EUR', level=1)
-
         print('[Balance] euros: %f bitcoins %f' % (euros, bitcoins))
 
         if order_prediction == Prediction.UP or order_prediction == Prediction.DOWN:
             self.gdax_client.cancel_all(product_id='BTC-EUR')
+
+        euros, bitcoins = GdaxClient().get_accounts_balance()
+        order_book = self.gdax_client.get_product_order_book(product_id='BTC-EUR', level=1)
 
         if order_prediction == Prediction.UP and euros > 10.0:
             price = float(order_book['asks'][0][0])
@@ -78,9 +78,9 @@ class Order:
                 pass
                 # self.gdax_client.buy(product_id='BTC-EUR', type='limit', price=price, size=size_buy)
 
-            with open('order_buy_history_BTC-EUR.csv', newline='', encoding='utf-8', mode='a') as file:
-                writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-                writer.writerow([price])
+                with open('order_buy_history_BTC-EUR.csv', newline='', encoding='utf-8', mode='a') as file:
+                    writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+                    writer.writerow([price])
 
         elif order_prediction == Prediction.DOWN:
             try:
