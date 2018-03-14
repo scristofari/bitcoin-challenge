@@ -58,19 +58,25 @@ class Order:
         from sklearn.externals import joblib
 
         last_volume = float(df[-1:]['volume'])
+        last_price = float(df[-1:]['price'])
+        last_price_n2 = float(df[-2:1]['volume'])
         model_anomaly = joblib.load('./model-anomaly-BTC-EUR.pkl')
         anomaly_limit = np.exp(model_anomaly.score(np.percentile(df['volume'].values, 75)))
         last_volume_anomaly = np.exp(model_anomaly.score(last_volume))
-
-        print('[Balance] euros: %f bitcoins %f' % (euros, bitcoins))
 
         if order_prediction == Prediction.UP or order_prediction == Prediction.DOWN:
             self.gdax_client.cancel_all(product_id='BTC-EUR')
 
         euros, bitcoins = GdaxClient().get_accounts_balance()
+        print('[Balance] euros: %f bitcoins %f' % (euros, bitcoins))
         order_book = self.gdax_client.get_product_order_book(product_id='BTC-EUR', level=1)
 
-        if order_prediction == Prediction.UP and euros > 10.0:
+        if last_volume_anomaly < anomaly_limit and last_price < last_price_n2:
+            price = float(order_book['bids'][0][0])
+            print('[ANOMALY] sell at %f with %f size' % (price, bitcoins))
+            # GdaxClient.sell(product_id='BTC-EUR', type='limit', price=price, size=bitcoins)
+
+        elif order_prediction == Prediction.UP and euros > 10.0:
             price = float(order_book['asks'][0][0])
             size = float(order_book['asks'][0][1])
             size_buy = float(euros / price)
@@ -93,10 +99,6 @@ class Order:
             size = float(order_book['bids'][0][1])
             if last_price < price and bitcoins < size:
                 print('sell at %f with %f size' % (price, bitcoins))
-                # GdaxClient.sell(product_id='BTC-EUR', type='limit', price=price, size=bitcoins)
-
-            elif last_volume_anomaly < anomaly_limit:
-                print('[ANOMALY] sell at %f with %f size' % (price, bitcoins))
                 # GdaxClient.sell(product_id='BTC-EUR', type='limit', price=price, size=bitcoins)
 
         else:

@@ -158,7 +158,7 @@ class Core:
         _, _, _, _, scaler_x, scaler_y = Core.prepare_inputs_outputs(df)
         model = load_model('./model-%s.h5' % self.product_id)
         model_anomaly = joblib.load('./model-anomaly-%s.pkl' % self.product_id)
-        anomaly_limit = np.exp(model_anomaly.score(np.percentile(df['volume'].values, 75)))
+        anomaly_limit = np.exp(model_anomaly.score(np.percentile(df['volume'].values, 60)))
 
         buy = False
         cash = CASH_FIRST
@@ -203,6 +203,17 @@ class Core:
                 last_real_order = real_order
                 continue
 
+            anomaly = np.exp(model_anomaly.score(row['volume']))
+            if cash == 0 and buy is True and anomaly < anomaly_limit and real_order == Prediction.DOWN:
+                n_anomalies = n_anomalies + 1
+                buy = False
+                cash = bitcoin * row['open']
+                bitcoin = 0
+                n_api_call = n_api_call + 1
+                y_last = row['open']
+                last_real_order = real_order
+                continue
+
             if predict_order == Prediction.UP:  # and last_real_order == Prediction.UP:
                 if cash > 0 and buy is False:
                     previous_cash = cash
@@ -213,16 +224,7 @@ class Core:
 
             elif predict_order == Prediction.DOWN:  # and last_real_order == Prediction.DOWN:
                 if cash == 0 and buy is True:
-                    anomaly = np.exp(model_anomaly.score(row['volume']))
-                    plus06 = int(((previous_cash * 0.6) / 100))
-                    if previous_cash + plus06 < bitcoin * row['open'] and anomaly > anomaly_limit:
-                        buy = False
-                        cash = bitcoin * row['open']
-                        bitcoin = 0
-                        n_api_call = n_api_call + 1
-
-                    if anomaly < anomaly_limit:
-                        n_anomalies = n_anomalies + 1
+                    if previous_cash < bitcoin * row['open']:
                         buy = False
                         cash = bitcoin * row['open']
                         bitcoin = 0
