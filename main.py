@@ -8,6 +8,8 @@ class BitCoinChallenge(cmd.Cmd):
     def do_spot(self, arg):
         import time
         t0 = time.time()
+        if arg == '':
+            arg = 'test'
         c = core.Core(env=arg)
         c.generate_spot_data()
         t1 = time.time()

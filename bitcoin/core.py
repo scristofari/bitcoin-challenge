@@ -18,6 +18,7 @@ class Core:
     env = None
 
     def __init__(self, product_id='BTC-EUR', env='test'):
+        logger.info('ENV => %s' % env)
         self.product_id = product_id
         self.env = env
 
