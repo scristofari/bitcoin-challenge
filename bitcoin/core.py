@@ -42,9 +42,12 @@ class Core:
 
     def predict_order(self, state):
         from keras.models import load_model
+        from sklearn.externals import joblib
 
         df = self.load_data()
-        _, _, _, _, scaler_x, scaler_y = Core.prepare_inputs_outputs(df)
+
+        scaler_x = joblib.load('model-scaler-x-%s.pkl' % self.product_id)
+        scaler_y = joblib.load('model-scaler-y-%s.pkl' % self.product_id)
 
         data = self.gdax_client.get_product_ticker(self.product_id)
         price = float(data['price'])
@@ -141,6 +144,30 @@ class Core:
 
         return history
 
+    def train_scaler(self):
+        logger.info('Train Scaler Model')
+
+        from sklearn.preprocessing import MinMaxScaler
+        from sklearn.externals import joblib
+
+        df = self.load_data()
+
+        # delete row
+        df.dropna(how='any', inplace=True)
+
+        X = df[['open', 'reddit_sentiment', 'tw_sentiment', 'tw_followers', 'google_sentiment']]
+        y = df['close'].values.reshape(-1, 1)
+
+        scaler_x = MinMaxScaler(feature_range=(-1, 1))
+        scaler_x.fit(X)
+        scaler_y = MinMaxScaler(feature_range=(-1, 1))
+        scaler_y.fit(y)
+
+        joblib.dump(scaler_x, 'model-scaler-x-%s.pkl' % self.product_id)
+        joblib.dump(scaler_y, 'model-scaler-y-%s.pkl' % self.product_id)
+
+        return scaler_x, scaler_y
+
     def train_anomaly(self):
 
         logger.info('Train Anomaly Model')
@@ -169,7 +196,10 @@ class Core:
         except FileNotFoundError:
             raise NameError('No data')
 
-        _, _, _, _, scaler_x, scaler_y = Core.prepare_inputs_outputs(df)
+
+        scaler_x = joblib.load('model-scaler-x-%s.pkl' % self.product_id)
+        scaler_y = joblib.load('model-scaler-y-%s.pkl' % self.product_id)
+
         model = load_model('./model-%s.h5' % self.product_id)
         model_anomaly = joblib.load('./model-anomaly-%s.pkl' % self.product_id)
         anomaly_limit = np.exp(model_anomaly.score(np.percentile(df['volume'].values, 60)))
