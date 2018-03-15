@@ -1,4 +1,5 @@
 import csv
+import time
 import numpy as np
 import pandas as pd
 from .gdax_client import GdaxClient
@@ -23,6 +24,7 @@ class Core:
         self.env = env
 
     def generate_spot_data(self):
+        t0 = time.time()
         state = Sentiment().build()
         rate = self.gdax_client.last_rate(self.product_id)
 
@@ -30,7 +32,11 @@ class Core:
             writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
             writer.writerow(rate + state.from_twitter + [state.from_reddit] + [state.from_gnews])
 
+        t1 = time.time()
+        print("SPOT execution time : %d s" % (t1 - t0))
         self.predict_order(state)
+        t2 = time.time()
+        print("PREDICT execution time : %d s" % (t2 - t1))
 
     def load_data(self):
         logger.info('Load data from CSV.')

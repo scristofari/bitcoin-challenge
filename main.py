@@ -13,7 +13,7 @@ class BitCoinChallenge(cmd.Cmd):
         c = core.Core(env=arg)
         c.generate_spot_data()
         t1 = time.time()
-        print("Execution time : %d s" % (t1 - t0))
+        print("TOTAL execution time : %d s" % (t1 - t0))
 
     def do_train(self, arg):
         c = core.Core()
