@@ -8,7 +8,7 @@ from .predition import Prediction
 from datetime import datetime
 from bitcoin.log import logger
 
-TEST_SIZE = 0.2
+TEST_SIZE = 0.1
 CASH_FIRST = 1000
 
 
@@ -135,7 +135,7 @@ class Core:
 
         model.compile(loss='mae', optimizer='adam', metrics=['mse', 'mae'])
         history = model.fit(X_train, y_train, batch_size=X_train.shape[0],
-                            epochs=100, validation_data=(X_test, y_test), shuffle=False, verbose=False)
+                            epochs=100, validation_data=(X_test, y_test), shuffle=False, verbose=True)
 
         model.save('model-%s.h5' % self.product_id)
 
@@ -153,7 +153,7 @@ class Core:
 
         X = df['volume'].values.reshape(-1, 1)
         params = {'bandwidth': np.logspace(0, df['volume'].max())}
-        grid = GridSearchCV(KernelDensity(), params)
+        grid = GridSearchCV(KernelDensity(), params, verbose=True)
         grid.fit(X)
 
         joblib.dump(grid.best_estimator_, 'model-anomaly-%s.pkl' % self.product_id)
