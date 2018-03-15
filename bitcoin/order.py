@@ -75,6 +75,7 @@ class Order:
         euros, bitcoins = GdaxClient().get_accounts_balance()
 
         order_book = self.gdax_client.get_product_order_book(product_id='BTC-EUR', level=1)
+        logger.info('order book => %s' % order_book)
 
         if last_volume_anomaly < anomaly_limit and last_price < last_price_n2 and bitcoins > 0:
             price = float(order_book['bids'][0][0])
