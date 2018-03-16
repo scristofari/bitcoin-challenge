@@ -6,6 +6,7 @@ run:
 
 datacp:
 	scp root@159.65.82.141:/root/python/bitcoin-challenge/*.csv /Users/sylvaincristofari/python/bitcoin-challenge
+	scp root@159.65.82.141:/root/python/bitcoin-challenge/*.db /Users/sylvaincristofari/python/bitcoin-challenge
 
 test:
 	docker run --rm  -v $(PWD):/src bitcoin-challenge:latest python main.py test

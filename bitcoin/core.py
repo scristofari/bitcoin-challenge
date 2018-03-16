@@ -1,4 +1,4 @@
-import csv
+import sqlite3
 import time
 import numpy as np
 import pandas as pd
@@ -8,6 +8,7 @@ from bitcoin.order import Order
 from .predition import Prediction
 from datetime import datetime
 from bitcoin.log import logger
+import bitcoin.db as db
 
 TEST_SIZE = 0.1
 CASH_FIRST = 1000
@@ -28,17 +29,16 @@ class Core:
         state = Sentiment().build()
         rate = self.gdax_client.last_rate(self.product_id)
 
-        with open('%s.csv' % self.product_id, newline='', encoding='utf-8', mode='a') as file:
-            writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-            writer.writerow(rate + state.from_twitter + [state.from_reddit] + [state.from_gnews])
-
         t1 = time.time()
         print("SPOT execution time : %d s" % (t1 - t0))
-        self.predict_order(state)
+
+        predicted_price = self.predict_order(rate, state)
         t2 = time.time()
         print("PREDICT execution time : %d s" % (t2 - t1))
 
-    def load_data(self):
+        db.insert_data(rate + state.from_twitter + [state.from_reddit] + [state.from_gnews] + [predicted_price])
+
+    def load_csv_data(self):
         logger.info('Load data from CSV.')
         import pandas as pd
         return pd.read_csv('%s.csv' % self.product_id,
@@ -46,11 +46,9 @@ class Core:
                                   'reddit_sentiment', 'google_sentiment']
                            )
 
-    def predict_order(self, state):
+    def predict_order(self, rate, state):
         from keras.models import load_model
         from sklearn.externals import joblib
-
-        df = self.load_data()
 
         scaler_x = joblib.load('model-scaler-x-%s.pkl' % self.product_id)
         scaler_y = joblib.load('model-scaler-y-%s.pkl' % self.product_id)
@@ -58,13 +56,7 @@ class Core:
         data = self.gdax_client.get_product_ticker(self.product_id)
         price = float(data['price'])
 
-        try:
-            history = pd.read_csv('order_history_%s.csv' % self.product_id,
-                                  names=['price', 'predict_price', 'predict_order'])
-
-            last_predict_price = float(history[-1:]['predict_price'])
-        except FileNotFoundError:
-            last_predict_price = price
+        last_predict_price = db.get_last_predicted_price()
 
         model = load_model('./model-%s.h5' % self.product_id)
 
@@ -83,11 +75,9 @@ class Core:
         elif last_predict_price == predict_price:
             predict_order = Prediction.STAY
 
-        with open('order_history_%s.csv' % self.product_id, newline='', encoding='utf-8', mode='a') as file:
-            writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-            writer.writerow([price, predict_price, predict_order])
+        Order(env=self.env).action_limit(rate, predict_order)
 
-        Order(env=self.env).action_limit(df, predict_order)
+        return predict_price
 
     @staticmethod
     def prepare_inputs_outputs(df):
@@ -156,7 +146,9 @@ class Core:
         from sklearn.preprocessing import MinMaxScaler
         from sklearn.externals import joblib
 
-        df = self.load_data()
+        conn = sqlite3.connect("bitcoin.db")
+        df = pd.read_sql_query("select * from btceur", conn)
+        conn.close()
 
         # delete row
         df.dropna(how='any', inplace=True)
@@ -182,7 +174,9 @@ class Core:
         from sklearn.externals import joblib
         from sklearn.model_selection import GridSearchCV
 
-        df = self.load_data()
+        conn = sqlite3.connect("bitcoin.db")
+        df = pd.read_sql_query("select * from btceur", conn)
+        conn.close()
 
         X = df['volume'].values.reshape(-1, 1)
         params = {'bandwidth': np.logspace(0, df['volume'].max())}
@@ -197,11 +191,9 @@ class Core:
         from keras.models import load_model
         from sklearn.externals import joblib
 
-        try:
-            df = self.load_data()
-        except FileNotFoundError:
-            raise NameError('No data')
-
+        conn = sqlite3.connect("bitcoin.db")
+        df = pd.read_sql_query("select * from btceur", conn)
+        conn.close()
 
         scaler_x = joblib.load('model-scaler-x-%s.pkl' % self.product_id)
         scaler_y = joblib.load('model-scaler-y-%s.pkl' % self.product_id)
