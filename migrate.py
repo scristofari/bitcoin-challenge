@@ -1,6 +1,6 @@
 import sqlite3
 import bitcoin.db as db
-import csv
+import pandas as pd
 
 
 def create_tables():
@@ -19,8 +19,14 @@ def create_tables():
 
 
 create_tables()
+
 print('Import to BTC EUR')
-with open('BTC-EUR.csv', 'r') as f:
-    reader = csv.reader(f, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-    for row in reader:
-        db.insert_data(row + ['0'])
+df = pd.read_csv('BTC-EUR.csv',
+                 names=['time', 'low', 'high', 'open', 'close', 'volume', 'tw_sentiment', 'tw_followers',
+                        'reddit_sentiment', 'google_sentiment']
+                 )
+df.dropna(how='any', inplace=True)
+df['predicted_price'] = 0.0
+
+for index, row in df.iterrows():
+    db.insert_data(row)

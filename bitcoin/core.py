@@ -24,6 +24,15 @@ class Core:
         self.product_id = product_id
         self.env = env
 
+    def load_sql_data(self):
+        logger.info('Load data from SQL.')
+
+        conn = sqlite3.connect("bitcoin.db")
+        df = pd.read_sql_query("SELECT * from btceur ORDER BY time ASC", conn)
+        conn.close()
+
+        return df
+
     def generate_spot_data(self):
         t0 = time.time()
         state = Sentiment().build()
@@ -37,14 +46,6 @@ class Core:
         print("PREDICT execution time : %d s" % (t2 - t1))
 
         db.insert_data(rate + state.from_twitter + [state.from_reddit] + [state.from_gnews] + [predicted_price])
-
-    def load_csv_data(self):
-        logger.info('Load data from CSV.')
-        import pandas as pd
-        return pd.read_csv('%s.csv' % self.product_id,
-                           names=['time', 'low', 'high', 'open', 'close', 'volume', 'tw_sentiment', 'tw_followers',
-                                  'reddit_sentiment', 'google_sentiment']
-                           )
 
     def predict_order(self, rate, state):
         from keras.models import load_model
@@ -110,7 +111,7 @@ class Core:
         from keras.layers import Activation
         from keras.layers import Dropout
 
-        df = self.load_data()
+        df = self.load_sql_data()
 
         np.random.seed(42)
         X_train, X_test, y_train, y_test, scaler_x, scaler_y = Core.prepare_inputs_outputs(df)
@@ -146,9 +147,7 @@ class Core:
         from sklearn.preprocessing import MinMaxScaler
         from sklearn.externals import joblib
 
-        conn = sqlite3.connect("bitcoin.db")
-        df = pd.read_sql_query("select * from btceur", conn)
-        conn.close()
+        df = self.load_sql_data()
 
         # delete row
         df.dropna(how='any', inplace=True)
@@ -174,9 +173,7 @@ class Core:
         from sklearn.externals import joblib
         from sklearn.model_selection import GridSearchCV
 
-        conn = sqlite3.connect("bitcoin.db")
-        df = pd.read_sql_query("select * from btceur", conn)
-        conn.close()
+        df = self.load_sql_data()
 
         X = df['volume'].values.reshape(-1, 1)
         params = {'bandwidth': np.logspace(0, df['volume'].max())}
@@ -191,9 +188,7 @@ class Core:
         from keras.models import load_model
         from sklearn.externals import joblib
 
-        conn = sqlite3.connect("bitcoin.db")
-        df = pd.read_sql_query("select * from btceur", conn)
-        conn.close()
+        df = self.load_sql_data()
 
         scaler_x = joblib.load('model-scaler-x-%s.pkl' % self.product_id)
         scaler_y = joblib.load('model-scaler-y-%s.pkl' % self.product_id)
