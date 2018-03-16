@@ -27,7 +27,9 @@ class Sentiment:
         return self
 
     def build_from_gnews(self):
-        r = requests.get('https://finance.google.com/finance/company_news?q=currency:btc&output=json')
+        r = requests.get('https://finance.google.com/finance/company_news?q=currency:btc&output=json', headers={
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'
+        })
         if r.status_code > 200:
             logger.error('Status -> %d -> Message %s' % (r.status_code, r.text))
             raise Exception(r.text)
