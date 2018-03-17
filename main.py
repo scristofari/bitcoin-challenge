@@ -18,7 +18,7 @@ class BitCoinChallenge(cmd.Cmd):
     def do_train(self, arg):
         c = core.Core()
         c.train()
-        c.train_anomaly()
+        #c.train_anomaly()
         c.train_scaler()
 
     def do_test(self, arg):

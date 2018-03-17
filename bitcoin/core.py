@@ -71,29 +71,11 @@ class Core:
 
         return predict_price
 
-    @staticmethod
-    def prepare_inputs_outputs(df):
-        from sklearn.preprocessing import MinMaxScaler
-        from sklearn.model_selection import train_test_split
-
-        # delete row or mean
-        # df = df.apply(lambda x: x.fillna(x.mean()), axis=0)
-        df.dropna(how='any', inplace=True)
-
-        X = df[['open', 'reddit_sentiment', 'tw_sentiment', 'tw_followers', 'google_sentiment']]
-        y = df['close'].values.reshape(-1, 1)
-
-        scaler_x = MinMaxScaler(feature_range=(-1, 1))
-        scaler_y = MinMaxScaler(feature_range=(-1, 1))
-        X_scale = scaler_x.fit_transform(X)
-        y_scale = scaler_y.fit_transform(y)
-
-        X_train, X_test, y_train, y_test = train_test_split(X_scale, y_scale, test_size=TEST_SIZE, shuffle=False)
-
-        return X_train, X_test, y_train, y_test, scaler_x, scaler_y
-
     def train(self):
         logger.info('Train Model')
+
+        from sklearn.externals import joblib
+        from sklearn.model_selection import train_test_split
 
         from keras import regularizers
         from keras.models import Sequential
@@ -102,10 +84,20 @@ class Core:
         from keras.layers import Activation
         from keras.layers import Dropout
 
-        df = db.get_all_data()
-
         np.random.seed(42)
-        X_train, X_test, y_train, y_test, scaler_x, scaler_y = Core.prepare_inputs_outputs(df)
+
+        df = db.get_all_data()
+        df.dropna(how='any', inplace=True)
+
+        X = df[['open', 'reddit_sentiment', 'tw_sentiment', 'tw_followers', 'google_sentiment']]
+        y = df['close'].values.reshape(-1, 1)
+
+        scaler_x = joblib.load('model-scaler-x-%s.pkl' % self.product_id)
+        scaler_y = joblib.load('model-scaler-y-%s.pkl' % self.product_id)
+        X_scale = scaler_x.fit_transform(X)
+        y_scale = scaler_y.fit_transform(y)
+
+        X_train, X_test, y_train, y_test = train_test_split(X_scale, y_scale, test_size=TEST_SIZE, shuffle=False)
 
         X_train = np.reshape(X_train, (X_train.shape[0], 1, X_train.shape[1]))
         X_test = np.reshape(X_test, (X_test.shape[0], 1, X_test.shape[1]))
