@@ -5,6 +5,7 @@ from textblob import TextBlob
 import tweepy
 import re
 from .log import logger
+import xml.etree.ElementTree as ET
 from .db import get_last_real_gnews_sentiment
 
 consumer_key = 'ZF9flFkwQH3vpGZstOteQDe3n'
@@ -28,22 +29,33 @@ class Sentiment:
         return self
 
     def build_from_gnews(self):
-        # https://www.google.fr/search?q=BTC+to+USD&num=50&tbm=nws
-        r = requests.get('https://finance.google.com/finance/company_news?q=currency:btc&output=json')
+        def cleanhtml(raw_html):
+            cleanr = re.compile('<.*?>')
+            cleantext = re.sub(cleanr, '', raw_html)
+            cleantext = str.replace(cleantext, 'Full coverage', '')
+            cleantext = str.replace(cleantext, '&nbsp;', ' ')
+            return cleantext
+
+        r = requests.get(
+            'https://news.google.com/news/rss/search/section/q/bitcoin%20blockchain%20cryptocurrencies/bitcoin%20blockchain%20cryptocurrencies?hl=fr&gl=FR&ned=fr')
         if r.status_code > 200:
             last = get_last_real_gnews_sentiment()
             logger.error('Status -> %d -> get last -> %.2f' % (r.status_code, last))
             self.from_gnews = float(last)
             return
-        resp = r.json()
+
         df = pd.DataFrame(columns=['polarity'])
-        for p in resp['clusters']:
-            if 'a' in p:
-                text = '%s %s' % (p['a'][0]['t'], p['a'][0]['sp'])
-                pol = TextBlob(text).sentiment.polarity
-                df = df.append({
-                    'polarity': pol
-                }, ignore_index=True)
+        root = ET.fromstring(r.content)
+        channel = root.find('channel')
+        for item in channel.findall('item'):
+            title = item.find('title').text
+            description = cleanhtml(item.find('description').text)
+            print(description)
+            text = '%s %s' % (title, description)
+            pol = TextBlob(text).sentiment.polarity
+            df = df.append({
+                'polarity': pol
+            }, ignore_index=True)
 
         self.from_gnews = np.mean(df.values)
 
