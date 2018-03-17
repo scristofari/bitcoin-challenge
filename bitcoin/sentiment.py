@@ -30,7 +30,7 @@ class Sentiment:
         # https://www.google.fr/search?q=BTC+to+USD&num=50&tbm=nws
         r = requests.get('https://finance.google.com/finance/company_news?q=currency:btc&output=json')
         if r.status_code > 200:
-            logger.error('Status -> %d -> Message %s' % (r.status_code, r.text))
+            logger.error('Status -> %d' % r.status_code)
             self.from_gnews = 0.0
             return
         resp = r.json()
