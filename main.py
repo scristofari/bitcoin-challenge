@@ -1,6 +1,6 @@
 import cmd
 import sys
-from bitcoin import core
+from bitcoin.core import Core
 from bitcoin.gdax_client import GdaxClient
 
 
@@ -10,19 +10,19 @@ class BitCoinChallenge(cmd.Cmd):
         t0 = time.time()
         if arg == '':
             arg = 'test'
-        c = core.Core(env=arg)
+        c = Core(env=arg)
         c.generate_spot_data()
         t1 = time.time()
         print("TOTAL execution time : %d s" % (t1 - t0))
 
     def do_train(self, arg):
-        c = core.Core()
+        c = Core()
         c.train()
-        #c.train_anomaly()
+        c.train_anomaly()
         c.train_scaler()
 
     def do_test(self, arg):
-        c = core.Core()
+        c = Core()
         c.test_order_percent()
 
     def do_tick(self, arg):
