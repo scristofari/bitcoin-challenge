@@ -50,7 +50,6 @@ class Sentiment:
         for item in channel.findall('item'):
             title = item.find('title').text
             description = cleanhtml(item.find('description').text)
-            print(description)
             text = '%s %s' % (title, description)
             pol = TextBlob(text).sentiment.polarity
             df = df.append({
