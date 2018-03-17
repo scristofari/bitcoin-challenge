@@ -31,7 +31,8 @@ class Sentiment:
         r = requests.get('https://finance.google.com/finance/company_news?q=currency:btc&output=json')
         if r.status_code > 200:
             logger.error('Status -> %d -> Message %s' % (r.status_code, r.text))
-            raise Exception(r.text)
+            self.from_gnews = 0.0
+            return
         resp = r.json()
         df = pd.DataFrame(columns=['polarity'])
         for p in resp['clusters']:
