@@ -1,4 +1,6 @@
 import sqlite3
+import pandas as pd
+from .log import logger
 
 
 def insert_data(data):
@@ -73,3 +75,13 @@ def get_last_buy_price():
     conn.close()
 
     return result[0]
+
+
+def get_all_data():
+    logger.info('Load data from SQL.')
+
+    conn = sqlite3.connect("bitcoin.db")
+    df = pd.read_sql_query("SELECT * from btceur ORDER BY time ASC", conn)
+    conn.close()
+
+    return df

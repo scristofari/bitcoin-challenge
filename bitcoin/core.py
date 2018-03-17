@@ -10,7 +10,7 @@ from datetime import datetime
 from bitcoin.log import logger
 import bitcoin.db as db
 
-TEST_SIZE = 0.1
+TEST_SIZE = 0.2
 CASH_FIRST = 1000
 
 
@@ -23,15 +23,6 @@ class Core:
         logger.info('ENV => %s' % env)
         self.product_id = product_id
         self.env = env
-
-    def load_sql_data(self):
-        logger.info('Load data from SQL.')
-
-        conn = sqlite3.connect("bitcoin.db")
-        df = pd.read_sql_query("SELECT * from btceur ORDER BY time ASC", conn)
-        conn.close()
-
-        return df
 
     def generate_spot_data(self):
         t0 = time.time()
@@ -111,7 +102,7 @@ class Core:
         from keras.layers import Activation
         from keras.layers import Dropout
 
-        df = self.load_sql_data()
+        df = db.get_all_data()
 
         np.random.seed(42)
         X_train, X_test, y_train, y_test, scaler_x, scaler_y = Core.prepare_inputs_outputs(df)
@@ -147,7 +138,7 @@ class Core:
         from sklearn.preprocessing import MinMaxScaler
         from sklearn.externals import joblib
 
-        df = self.load_sql_data()
+        df = db.get_all_data()
 
         # delete row
         df.dropna(how='any', inplace=True)
@@ -173,7 +164,7 @@ class Core:
         from sklearn.externals import joblib
         from sklearn.model_selection import GridSearchCV
 
-        df = self.load_sql_data()
+        df = db.get_all_data()
 
         X = df['volume'].values.reshape(-1, 1)
         params = {'bandwidth': np.logspace(0, df['volume'].max())}
@@ -188,7 +179,7 @@ class Core:
         from keras.models import load_model
         from sklearn.externals import joblib
 
-        df = self.load_sql_data()
+        df = db.get_all_data()
 
         scaler_x = joblib.load('model-scaler-x-%s.pkl' % self.product_id)
         scaler_y = joblib.load('model-scaler-y-%s.pkl' % self.product_id)
