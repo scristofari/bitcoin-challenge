@@ -5,6 +5,7 @@ from textblob import TextBlob
 import tweepy
 import re
 from .log import logger
+from .db import get_last_real_gnews_sentiment
 
 consumer_key = 'ZF9flFkwQH3vpGZstOteQDe3n'
 consumer_secret = 'Z8xk8yrVVHK8EkOKN7NpcJ9c8XJVlMyLQRuAw8aZ5W4B7ovNsT'
@@ -30,8 +31,9 @@ class Sentiment:
         # https://www.google.fr/search?q=BTC+to+USD&num=50&tbm=nws
         r = requests.get('https://finance.google.com/finance/company_news?q=currency:btc&output=json')
         if r.status_code > 200:
-            logger.error('Status -> %d' % r.status_code)
-            self.from_gnews = 0.0
+            last = get_last_real_gnews_sentiment()
+            logger.error('Status -> %d -> get last -> %.2f' % (r.status_code, last))
+            self.from_gnews = float(last)
             return
         resp = r.json()
         df = pd.DataFrame(columns=['polarity'])

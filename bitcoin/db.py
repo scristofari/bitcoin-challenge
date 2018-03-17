@@ -85,3 +85,14 @@ def get_all_data():
     conn.close()
 
     return df
+
+
+def get_last_real_gnews_sentiment():
+    conn = sqlite3.connect('bitcoin.db')
+    c = conn.cursor()
+    c.execute('SELECT google_sentiment FROM btceur WHERE google_sentiment > 0 ORDER BY time DESC LIMIT 1')
+    result = c.fetchone()
+    conn.commit()
+    conn.close()
+
+    return result[0]
