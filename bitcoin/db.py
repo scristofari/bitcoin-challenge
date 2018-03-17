@@ -1,6 +1,4 @@
 import sqlite3
-import pandas as pd
-from .log import logger
 
 
 def insert_data(data):
@@ -78,11 +76,19 @@ def get_last_buy_price():
 
 
 def get_all_data():
+    import pandas as pd
+    from .log import logger
+    import numpy as np
+
     logger.info('Load data from SQL.')
 
     conn = sqlite3.connect("bitcoin.db")
     df = pd.read_sql_query("SELECT * from btceur ORDER BY time ASC", conn)
     conn.close()
+
+    # @todo Hack, replace zeros by NaN and fill forward.
+    df['google_sentiment'] = df['google_sentiment'].replace(0.0, np.NaN)
+    df['google_sentiment'] = df['google_sentiment'].fillna(method='ffill')
 
     return df
 
