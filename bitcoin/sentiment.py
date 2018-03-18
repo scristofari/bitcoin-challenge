@@ -37,7 +37,7 @@ class Sentiment:
             return cleantext
 
         r = requests.get(
-            'https://news.google.com/news/rss/search/section/q/bitcoin%20blockchain%20cryptocurrencies/bitcoin%20blockchain%20cryptocurrencies?hl=fr&gl=FR&ned=fr')
+            'https://news.google.com/news/rss/search/section/q/bitcoin%20blockchain%20cryptocurrencies/bitcoin%20blockchain%20cryptocurrencies?hl=en&gl=US&ned=en')
         if r.status_code > 200:
             last = get_last_real_gnews_sentiment()
             logger.error('Status -> %d -> get last -> %.2f' % (r.status_code, last))
