@@ -65,7 +65,7 @@ class Core:
         elif last_predict_price == predict_price:
             predict_order = Prediction.STAY
 
-        Order(env=self.env).action_limit(rate, predict_order)
+        # Order(env=self.env).action_limit(rate, predict_order)
 
         return predict_price
 
