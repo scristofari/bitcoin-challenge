@@ -1,7 +1,5 @@
-import sqlite3
 import time
 import numpy as np
-import pandas as pd
 from .gdax_client import GdaxClient
 from .sentiment import Sentiment
 from bitcoin.order import Order
@@ -10,7 +8,7 @@ from datetime import datetime
 from bitcoin.log import logger
 import bitcoin.db as db
 
-TEST_SIZE = 0.2
+TEST_SIZE = 0.3
 CASH_FIRST = 1000
 
 
@@ -87,7 +85,6 @@ class Core:
         np.random.seed(42)
 
         df = db.get_all_data()
-        df.dropna(how='any', inplace=True)
 
         X = df[['open', 'reddit_sentiment', 'tw_sentiment', 'tw_followers', 'google_sentiment']]
         y = df['close'].values.reshape(-1, 1)
@@ -160,7 +157,7 @@ class Core:
 
         X = df['volume'].values.reshape(-1, 1)
         params = {'bandwidth': np.logspace(0, df['volume'].max())}
-        grid = GridSearchCV(KernelDensity(), params, verbose=True)
+        grid = GridSearchCV(KernelDensity(), params, verbose=True, n_jobs=10)
         grid.fit(X)
 
         joblib.dump(grid.best_estimator_, 'model-anomaly-%s.pkl' % self.product_id)

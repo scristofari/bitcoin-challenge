@@ -90,6 +90,7 @@ def get_all_data():
     df['google_sentiment'] = df['google_sentiment'].replace(0.0, np.NaN)
     df['google_sentiment'] = df['google_sentiment'].fillna(method='ffill')
 
+    df.dropna(how='any', inplace=True)
     return df
 
 
