@@ -72,6 +72,8 @@ def get_last_buy_price():
     conn.commit()
     conn.close()
 
+    if result is None:
+        return 6146.93
     return result[0]
 
 
