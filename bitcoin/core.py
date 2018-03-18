@@ -20,7 +20,7 @@ class Core:
     def __init__(self, product_id='BTC-EUR', env='test'):
         logger.info('ENV => %s' % env)
         self.product_id = product_id
-        self.env = 'prod'
+        self.env = env
 
     def generate_spot_data(self):
         t0 = time.time()
