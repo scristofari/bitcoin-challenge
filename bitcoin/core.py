@@ -20,7 +20,7 @@ class Core:
     def __init__(self, product_id='BTC-EUR', env='test'):
         logger.info('ENV => %s' % env)
         self.product_id = product_id
-        self.env = env
+        self.env = 'prod'
 
     def generate_spot_data(self):
         t0 = time.time()
@@ -65,7 +65,7 @@ class Core:
         elif last_predict_price == predict_price:
             predict_order = Prediction.STAY
 
-        # Order(env=self.env).action_limit(rate, predict_order)
+        Order(env=self.env).action_limit(rate, predict_order)
 
         return predict_price
 
