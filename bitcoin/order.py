@@ -34,7 +34,7 @@ class Order:
 
         if last_volume_anomaly < anomaly_limit and last_price < last_price_n2 and bitcoins > 0:
             price = float(order_book['bids'][0][0])
-            logger.info('[ANOMALY] sell at %.2f with %.2f size' % (price, bitcoins))
+            logger.info('[ANOMALY] sell at %.2f with %.2f size' % (price, round(bitcoins, 8)))
 
             if self.env == 'prod':
                 r = self.gdax_client.sell(product_id='BTC-EUR', type='limit', price=price, size=bitcoins)
@@ -48,7 +48,7 @@ class Order:
                 logger.info('buy at %.2f with %.2f euros' % (price, euros))
 
                 if self.env == 'prod':
-                    r = self.gdax_client.buy(product_id='BTC-EUR', type='limit', price=price, size=size_buy)
+                    r = self.gdax_client.buy(product_id='BTC-EUR', type='limit', price=price, size=round(size_buy, 8))
                     logger.info('buy => %s' % r)
                     insert_next_buy(time.time(), price)
 
@@ -60,7 +60,7 @@ class Order:
                 logger.info('sell at %.2f with %.2f size' % (price, bitcoins))
 
                 if self.env == 'prod':
-                    r = self.gdax_client.sell(product_id='BTC-EUR', type='limit', price=price, size=bitcoins)
+                    r = self.gdax_client.sell(product_id='BTC-EUR', type='limit', price=price, size=round(bitcoins, 8))
                     logger.info('sell => %s' % r)
         else:
             logger.info('Do nothing')
