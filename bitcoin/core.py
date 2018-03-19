@@ -53,6 +53,7 @@ class Core:
         x_predict = np.array(
             [price, state.from_reddit, state.from_twitter[0], state.from_twitter[1],
              state.from_gnews]).reshape(1, -1)
+        x_predict = scaler_x.transform(x_predict)
         x_predict_reshaped = np.reshape(x_predict, (1, 1, 5))
         y_predict_r = model.predict(x_predict_reshaped)
 
