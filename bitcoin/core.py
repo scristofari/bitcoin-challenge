@@ -168,6 +168,8 @@ class Core:
         def last_cash_with_fee(bitcoins):
             last_price = db.get_last_buy_price()
             last_cash = last_price * bitcoins
+            print(last_cash)
+            print(last_cash + (last_cash * 0.5 / 100))
             return last_cash + (last_cash * 0.5 / 100)
 
         from keras.models import load_model
