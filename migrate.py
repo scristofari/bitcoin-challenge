@@ -38,11 +38,3 @@ def migrate_0002():
     c.execute("DELETE FROM btceur WHERE open == 6767.54")
     conn.commit()
     conn.close()
-
-def migrate_0003():
-    print('Add columns DB')
-    conn = sqlite3.connect('bitcoin.db')
-    c = conn.cursor()
-    c.execute("DELETE FROM btceur WHERE open == 6767.54")
-    conn.commit()
-    conn.close()
