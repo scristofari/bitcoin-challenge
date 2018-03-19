@@ -23,12 +23,13 @@ class Order:
         last_volume_anomaly = np.exp(model_anomaly.score(last_volume))
 
         if order_prediction == Prediction.UP or order_prediction == Prediction.DOWN:
-            self.gdax_client.cancel_all(product_id='BTC-EUR')
+            r = self.gdax_client.cancel_all(product_id='BTC-EUR')
+            logger.info('cancel all => %s' % r)
 
         euros, bitcoins = GdaxClient().get_accounts_balance()
 
         order_book = self.gdax_client.get_product_order_book(product_id='BTC-EUR', level=1)
-        logger.info('prediction %s' % (order_prediction) )
+        logger.info('prediction %s' % (order_prediction))
         logger.info('order book => %s' % order_book)
 
         if last_volume_anomaly < anomaly_limit and last_price < last_price_n2 and bitcoins > 0:
@@ -36,7 +37,8 @@ class Order:
             logger.info('[ANOMALY] sell at %.2f with %.2f size' % (price, bitcoins))
 
             if self.env == 'prod':
-                self.gdax_client.sell(product_id='BTC-EUR', type='limit', price=price, size=bitcoins)
+                r = self.gdax_client.sell(product_id='BTC-EUR', type='limit', price=price, size=bitcoins)
+                logger.info('anomaly sell => %s' % r)
 
         elif order_prediction == Prediction.UP and euros > 10:
             price = float(order_book['asks'][0][0])
@@ -46,7 +48,8 @@ class Order:
                 logger.info('buy at %.2f with %.2f euros' % (price, euros))
 
                 if self.env == 'prod':
-                    self.gdax_client.buy(product_id='BTC-EUR', type='limit', price=price, size=size_buy)
+                    r = self.gdax_client.buy(product_id='BTC-EUR', type='limit', price=price, size=size_buy)
+                    logger.info('buy => %s' % r)
                     insert_next_buy(time.time(), price)
 
         elif order_prediction == Prediction.DOWN and bitcoins > 0:
@@ -57,8 +60,8 @@ class Order:
                 logger.info('sell at %.2f with %.2f size' % (price, bitcoins))
 
                 if self.env == 'prod':
-                    self.gdax_client.sell(product_id='BTC-EUR', type='limit', price=price, size=bitcoins)
-
+                    r = self.gdax_client.sell(product_id='BTC-EUR', type='limit', price=price, size=bitcoins)
+                    logger.info('sell => %s' % r)
         else:
             logger.info('Do nothing')
 
