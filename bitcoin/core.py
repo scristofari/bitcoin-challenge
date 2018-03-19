@@ -165,6 +165,11 @@ class Core:
         return grid.best_estimator_
 
     def test_order_percent(self):
+        def last_cash_with_fee(bitcoins):
+            last_price = db.get_last_buy_price()
+            last_cash = last_price * bitcoins
+            return last_cash + (last_cash * 0.5 / 100)
+
         from keras.models import load_model
         from sklearn.externals import joblib
 
@@ -246,7 +251,7 @@ class Core:
 
             elif predict_order == Prediction.DOWN:  # and last_real_order == Prediction.DOWN:
                 if cash == 0 and buy is True:
-                    if previous_cash < bitcoin * row['open']:
+                    if last_cash_with_fee(bitcoin) < bitcoin * row['open']:
                         buy = False
                         cash = bitcoin * row['open']
                         bitcoin = 0

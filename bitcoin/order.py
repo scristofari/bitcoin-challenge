@@ -11,6 +11,12 @@ def floor3(x):
     return math.floor(x * 1000.0) / 1000.0
 
 
+def last_cash_with_fee(bitcoins):
+    last_price = get_last_buy_price()
+    last_cash = last_price * bitcoins
+    return last_cash + (last_cash * 0.5 / 100)
+
+
 class Order:
     env = None
 
@@ -57,10 +63,9 @@ class Order:
                     insert_next_buy(price)
 
         elif order_prediction == Prediction.DOWN and bitcoins > 0:
-            last_price = get_last_buy_price()
             price = float(order_book['bids'][0][0])
             size = float(order_book['bids'][0][1])
-            if last_price < price and bitcoins < size:
+            if last_cash_with_fee(bitcoins) < price * bitcoins and bitcoins < size:
                 logger.info('sell at %.2f with %.2f size' % (price, bitcoins))
 
                 if self.env == 'prod':
