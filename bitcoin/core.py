@@ -90,12 +90,8 @@ class Core:
 
         scaler_x = joblib.load('model-scaler-x-%s.pkl' % self.product_id)
         scaler_y = joblib.load('model-scaler-y-%s.pkl' % self.product_id)
-        X_scale = y_scale = None
-        try:
-            X_scale = scaler_x.fit_transform(X)
-            y_scale = scaler_y.fit_transform(y)
-        except ValueError:
-            logger.info('Value error training set')
+        X_scale = scaler_x.fit_transform(X)
+        y_scale = scaler_y.fit_transform(y)
 
         X_train, X_test, y_train, y_test = train_test_split(X_scale, y_scale, test_size=TEST_SIZE, shuffle=False)
 
