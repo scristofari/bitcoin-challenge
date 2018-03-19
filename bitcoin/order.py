@@ -1,10 +1,15 @@
 import time
+import math
 from sklearn.externals import joblib
 import numpy as np
 from .predition import Prediction
 from .gdax_client import GdaxClient
 from .log import logger
 from .db import get_last_price_and_volume, get_n2_price, insert_next_buy, get_last_buy_price
+
+
+def floor2(x):
+    return math.floor(x * 100.0) / 100.0
 
 
 class Order:
@@ -34,10 +39,10 @@ class Order:
 
         if last_volume_anomaly < anomaly_limit and last_price < last_price_n2 and bitcoins > 0:
             price = float(order_book['bids'][0][0])
-            logger.info('[ANOMALY] sell at %.2f with %.2f size' % (price, round(bitcoins, 8)))
+            logger.info('[ANOMALY] sell at %.2f with %.2f size' % (price, floor2(bitcoins)))
 
             if self.env == 'prod':
-                r = self.gdax_client.sell(product_id='BTC-EUR', type='limit', price=price, size=bitcoins)
+                r = self.gdax_client.sell(product_id='BTC-EUR', type='limit', price=price, size=floor2(bitcoins))
                 logger.info('anomaly sell => %s' % r)
 
         elif order_prediction == Prediction.UP and euros > 10:
@@ -48,7 +53,7 @@ class Order:
                 logger.info('buy at %.2f with %.2f euros' % (price, euros))
 
                 if self.env == 'prod':
-                    r = self.gdax_client.buy(product_id='BTC-EUR', type='limit', price=price, size=round(size_buy, 8))
+                    r = self.gdax_client.buy(product_id='BTC-EUR', type='limit', price=price, size=floor2(size_buy))
                     logger.info('buy => %s' % r)
                     insert_next_buy(time.time(), price)
 
@@ -60,7 +65,7 @@ class Order:
                 logger.info('sell at %.2f with %.2f size' % (price, bitcoins))
 
                 if self.env == 'prod':
-                    r = self.gdax_client.sell(product_id='BTC-EUR', type='limit', price=price, size=round(bitcoins, 8))
+                    r = self.gdax_client.sell(product_id='BTC-EUR', type='limit', price=price, size=floor2(bitcoins))
                     logger.info('sell => %s' % r)
         else:
             logger.info('Do nothing')
