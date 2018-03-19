@@ -53,7 +53,6 @@ class Core:
         x_predict = np.array(
             [price, state.from_reddit, state.from_twitter[0], state.from_twitter[1],
              state.from_gnews]).reshape(1, -1)
-        x_predict = scaler_x.transform(x_predict)
         x_predict_reshaped = np.reshape(x_predict, (1, 1, 5))
         y_predict_r = model.predict(x_predict_reshaped)
 
@@ -91,8 +90,12 @@ class Core:
 
         scaler_x = joblib.load('model-scaler-x-%s.pkl' % self.product_id)
         scaler_y = joblib.load('model-scaler-y-%s.pkl' % self.product_id)
-        X_scale = scaler_x.fit_transform(X)
-        y_scale = scaler_y.fit_transform(y)
+        X_scale = y_scale = None
+        try:
+            X_scale = scaler_x.fit_transform(X)
+            y_scale = scaler_y.fit_transform(y)
+        except ValueError:
+            logger.info('Value error training set')
 
         X_train, X_test, y_train, y_test = train_test_split(X_scale, y_scale, test_size=TEST_SIZE, shuffle=False)
 
@@ -195,7 +198,10 @@ class Core:
 
             x_predict = np.array([row['open'], row['reddit_sentiment'], row['tw_sentiment'], row['tw_followers'],
                                   row['google_sentiment']]).reshape(1, -1)
-            x_predict = scaler_x.transform(x_predict)
+            try:
+                x_predict = scaler_x.transform(x_predict)
+            except ValueError:
+                continue
             x_predict_reshaped = np.reshape(x_predict, (1, 1, 5))
             y_predict_r = model.predict(x_predict_reshaped)
             y_predict_r_rescaled = scaler_y.inverse_transform(y_predict_r)
@@ -265,6 +271,8 @@ class Core:
 
         percent_predict_win_loss = (cash - CASH_FIRST) / CASH_FIRST * 100
         n_days = int(count_test / 1440)
+        if n_days == 0:
+            n_days = 1
         logger.info("Number of api calls: %.2f / min" % float(n_api_call / count_test))
         logger.info("Number of anomalies: %d" % n_anomalies)
         logger.info("With prediction %.2f euros => %.2f%% => %.2f%% / day" % (
