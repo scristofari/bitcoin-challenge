@@ -1,4 +1,3 @@
-import time
 from sklearn.externals import joblib
 import numpy as np
 from .predition import Prediction
@@ -55,7 +54,7 @@ class Order:
                 if self.env == 'prod':
                     r = self.gdax_client.buy(product_id='BTC-EUR', type='limit', price=price, size=floor3(size_buy))
                     logger.info('buy => %s' % r)
-                    insert_next_buy(time.time(), price)
+                    insert_next_buy(price)
 
         elif order_prediction == Prediction.DOWN and bitcoins > 0:
             last_price = get_last_buy_price()
@@ -70,4 +69,4 @@ class Order:
         else:
             logger.info('Do nothing')
 
-        return 0
+        return order_book

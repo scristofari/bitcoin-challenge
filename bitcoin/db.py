@@ -53,16 +53,14 @@ def get_n2_price():
     return result[0]
 
 
-def insert_next_buy(time, price):
+def insert_next_buy(price):
+    import time
+
     conn = sqlite3.connect('bitcoin.db')
     c = conn.cursor()
-    c.execute('INSERT INTO buy_history VALUES (?,?)', (time, price))
-    result = c.fetchone()
+    c.execute('INSERT INTO buy_history VALUES (?,?)', (int(time.time()), price))
     conn.commit()
     conn.close()
-
-    return result[0]
-
 
 def get_last_buy_price():
     conn = sqlite3.connect('bitcoin.db')
@@ -73,7 +71,8 @@ def get_last_buy_price():
     conn.close()
 
     if result is None:
-        return 6146.93
+        # first buy
+        return 6726.51
     return result[0]
 
 
