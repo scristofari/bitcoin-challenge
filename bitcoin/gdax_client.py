@@ -26,3 +26,9 @@ class GdaxClient(AuthenticatedClient):
 
         logger.info('[Balance] euros: %f bitcoins %f' % (euros, bitcoins))
         return euros, bitcoins
+
+    def get_last_buy_filled(self):
+        fills = self.get_fills(product_id='BTC-EUR', limit=10)
+        for fill in fills[0]:
+            if fill['side'] == 'buy':
+                return fill['price']

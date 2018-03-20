@@ -180,11 +180,11 @@ class Core:
 
         model = load_model('./model-%s.h5' % self.product_id)
         model_anomaly = joblib.load('./model-anomaly-%s.pkl' % self.product_id)
-        anomaly_limit = np.exp(model_anomaly.score(np.percentile(df['volume'].values, 60)))
+        anomaly_limit = np.exp(model_anomaly.score(np.percentile(df['volume'].values, 75)))
 
         buy = False
         cash = CASH_FIRST
-        previous_cash = bitcoin = n_error = n_anomalies = n_api_call = 0
+        bitcoin = n_error = n_anomalies = n_api_call = 0
         last_volume = last_real_order = y_predict_last = y_last = None
 
         count = df['open'].count()
@@ -234,26 +234,25 @@ class Core:
             if cash == 0 and buy is True and anomaly < anomaly_limit and real_order == Prediction.DOWN:
                 n_anomalies = n_anomalies + 1
                 buy = False
-                cash = bitcoin * row['open']
+                cash = bitcoin * (row['open'] - 0.1)
                 bitcoin = 0
                 n_api_call = n_api_call + 1
                 y_last = row['open']
                 last_real_order = real_order
                 continue
 
-            elif predict_order == Prediction.UP:  # and last_real_order == Prediction.UP:
+            if predict_order == Prediction.UP:  # and last_real_order == Prediction.UP:
                 if cash > 0 and buy is False:
-                    previous_cash = cash
                     buy = True
-                    bitcoin = cash / row['open']
+                    bitcoin = cash / (row['open'] + 0.1)
                     cash = 0
                     n_api_call = n_api_call + 1
 
             elif predict_order == Prediction.DOWN:  # and last_real_order == Prediction.DOWN:
                 if cash == 0 and buy is True:
-                    if last_cash_with_fee(bitcoin) < bitcoin * row['open']:
+                    if cash < bitcoin * row['open']:
                         buy = False
-                        cash = bitcoin * row['open']
+                        cash = bitcoin * (row['open'] - 0.1)
                         bitcoin = 0
                         n_api_call = n_api_call + 1
 
