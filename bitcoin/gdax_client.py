@@ -31,4 +31,4 @@ class GdaxClient(AuthenticatedClient):
         fills = self.get_fills(product_id='BTC-EUR', limit=10)
         for fill in fills[0]:
             if fill['side'] == 'buy':
-                return fill['price']
+                return float(fill['price'])
