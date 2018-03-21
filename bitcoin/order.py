@@ -6,7 +6,7 @@ from .log import logger
 from .db import get_last_price_and_volume, get_n2_price, insert_next_buy, get_last_buy_price
 
 GAP = 0.01
-LIMIT = 1
+LIMIT = 0.25
 
 
 def floor3(x):
