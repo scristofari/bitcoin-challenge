@@ -241,14 +241,14 @@ class Core:
                 last_real_order = real_order
                 continue
 
-            if predict_order == Prediction.UP:  # and last_real_order == Prediction.UP:
+            if predict_order == Prediction.UP and last_real_order == Prediction.DOWN:
                 if cash > 0 and buy is False:
                     buy = True
                     bitcoin = cash / (row['open'] + 0.1)
                     cash = 0
                     n_api_call = n_api_call + 1
 
-            elif predict_order == Prediction.DOWN:  # and last_real_order == Prediction.DOWN:
+            elif predict_order == Prediction.DOWN and last_real_order == Prediction.DOWN:
                 if cash == 0 and buy is True:
                     if cash < bitcoin * row['open']:
                         buy = False

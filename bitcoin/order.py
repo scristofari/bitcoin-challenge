@@ -49,7 +49,7 @@ class Order:
                 r = self.gdax_client.sell(product_id='BTC-EUR', type='limit', price=floor2(price + 0.1), size=bitcoins)
                 logger.info('anomaly sell => %s' % r)
 
-        elif order_prediction == Prediction.UP and euros > 10:
+        elif order_prediction == Prediction.UP and euros > 10 and last_price < last_price_n2:
             price = float(order_book['asks'][0][0])
             size = float(order_book['asks'][0][1])
             size_buy = float(euros / price)
@@ -61,7 +61,7 @@ class Order:
                                              size=floor3(size_buy))
                     logger.info('buy => %s' % r)
 
-        elif order_prediction == Prediction.DOWN and bitcoins > 0:
+        elif order_prediction == Prediction.DOWN and bitcoins > 0 and last_price > last_price_n2:
             price = float(order_book['bids'][0][0])
             size = float(order_book['bids'][0][1])
             last_price = self.gdax_client.get_last_buy_filled()
