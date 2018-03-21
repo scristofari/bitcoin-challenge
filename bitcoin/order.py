@@ -65,9 +65,9 @@ class Order:
             price = float(order_book['bids'][0][0])
             size = float(order_book['bids'][0][1])
             last_price = self.gdax_client.get_last_buy_filled()
-            logger.info('last buy price => ' % price)
+            logger.info('last buy price => ' % last_price)
 
-            if last_price < price * bitcoins and bitcoins < size:
+            if (last_price + 0.1) * bitcoins < price * bitcoins and bitcoins < size:
                 logger.info('sell at %.2f with %.2f size' % (price, bitcoins))
 
                 if self.env == 'prod':
