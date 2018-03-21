@@ -11,6 +11,11 @@ def floor3(x):
     return math.floor(x * 1000.0) / 1000.0
 
 
+def floor2(x):
+    import math
+    return math.floor(x * 100.0) / 100.0
+
+
 class Order:
     env = None
 
@@ -41,7 +46,7 @@ class Order:
             logger.info('[ANOMALY] sell at %.2f with %.2f size' % (price, bitcoins))
 
             if self.env == 'prod':
-                r = self.gdax_client.sell(product_id='BTC-EUR', type='limit', price=(price + 0.1), size=bitcoins)
+                r = self.gdax_client.sell(product_id='BTC-EUR', type='limit', price=floor2(price + 0.1), size=bitcoins)
                 logger.info('anomaly sell => %s' % r)
 
         elif order_prediction == Prediction.UP and euros > 10:
@@ -52,7 +57,8 @@ class Order:
                 logger.info('buy at %.2f with %.2f euros and size %.2f' % (price, euros, size_buy))
 
                 if self.env == 'prod':
-                    r = self.gdax_client.buy(product_id='BTC-EUR', type='limit', price=(price - 0.1), size=floor3(size_buy))
+                    r = self.gdax_client.buy(product_id='BTC-EUR', type='limit', price=floor2(price - 0.1),
+                                             size=floor3(size_buy))
                     logger.info('buy => %s' % r)
 
         elif order_prediction == Prediction.DOWN and bitcoins > 0:
@@ -65,7 +71,7 @@ class Order:
                 logger.info('sell at %.2f with %.2f size' % (price, bitcoins))
 
                 if self.env == 'prod':
-                    r = self.gdax_client.sell(product_id='BTC-EUR', type='limit', price=(price + 0.1), size=bitcoins)
+                    r = self.gdax_client.sell(product_id='BTC-EUR', type='limit', price=floor2(price + 0.1), size=bitcoins)
                     logger.info('sell => %s' % r)
         else:
             logger.info('Do nothing')
