@@ -67,7 +67,7 @@ class Order:
             last_price = self.gdax_client.get_last_buy_filled()
             logger.info('last buy price => ' % last_price)
 
-            if (last_price + 0.1) * bitcoins < price * bitcoins and bitcoins < size:
+            if (last_price + 0.1) < price and bitcoins < size:
                 logger.info('sell at %.2f with %.2f size' % (price, bitcoins))
 
                 if self.env == 'prod':
