@@ -8,6 +8,7 @@ from .db import get_last_price_and_volume, get_n2_price, insert_next_buy, get_la
 GAP = 0.01
 LIMIT = 1
 
+
 def floor3(x):
     import math
     return math.floor(x * 1000.0) / 1000.0
@@ -42,39 +43,35 @@ class Order:
         order_book = self.gdax_client.get_product_order_book(product_id='BTC-EUR', level=1)
         logger.info('prediction %s' % (order_prediction))
         logger.info('order book => %s' % order_book)
+        order_price = float(order_book['bids'][0][0])
+        order_size = float(order_book['bids'][0][1])
 
         if last_volume_anomaly < anomaly_limit and last_price < last_price_n2 and bitcoins > 0:
-            price = float(order_book['bids'][0][0])
-            size = float(order_book['bids'][0][1])
-            logger.info('[ANOMALY] sell at %.2f with %.2f size' % (price, bitcoins))
+            logger.info('[ANOMALY] sell at %.2f with %.2f size' % (order_price, bitcoins))
 
-            if self.env == 'prod' and size > LIMIT:
-                r = self.gdax_client.sell(product_id='BTC-EUR', type='limit', price=floor2(price + GAP), size=bitcoins)
+            if self.env == 'prod' and order_size > LIMIT:
+                r = self.gdax_client.sell(product_id='BTC-EUR', type='limit', price=floor2(order_price + GAP), size=bitcoins)
                 logger.info('anomaly sell => %s' % r)
 
         elif order_prediction == Prediction.UP and euros > 10:
-            price = float(order_book['asks'][0][0])
-            size = float(order_book['asks'][0][1])
-            size_buy = float(euros / price)
-            if size_buy < size and size > LIMIT:
-                logger.info('buy at %.2f with %.2f euros and size %.2f' % (price, euros, size_buy))
+            size_buy = float(euros / order_price)
+            if size_buy < order_size and order_size > LIMIT:
+                logger.info('buy at %.2f with %.2f euros and size %.2f' % (order_price, euros, size_buy))
 
                 if self.env == 'prod':
-                    r = self.gdax_client.buy(product_id='BTC-EUR', type='limit', price=floor2(price - GAP),
+                    r = self.gdax_client.buy(product_id='BTC-EUR', type='limit', price=floor2(order_price - GAP),
                                              size=floor3(size_buy))
                     logger.info('buy => %s' % r)
 
         elif order_prediction == Prediction.DOWN and bitcoins > 0:
-            price = float(order_book['bids'][0][0])
-            size = float(order_book['bids'][0][1])
             last_price = self.gdax_client.get_last_buy_filled()
             logger.info('last buy price => %.2f' % last_price)
 
-            if (last_price + GAP) < price and bitcoins < size and size > LIMIT:
-                logger.info('sell at %.2f with %.2f size' % (price, bitcoins))
+            if (last_price + GAP) < order_price and bitcoins < order_size and order_size > LIMIT:
+                logger.info('sell at %.2f with %.2f size' % (order_price, bitcoins))
 
                 if self.env == 'prod':
-                    r = self.gdax_client.sell(product_id='BTC-EUR', type='limit', price=floor2(price + GAP),
+                    r = self.gdax_client.sell(product_id='BTC-EUR', type='limit', price=floor2(order_price + GAP),
                                               size=bitcoins)
                     logger.info('sell => %s' % r)
         else:
