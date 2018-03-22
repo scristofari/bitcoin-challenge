@@ -70,7 +70,7 @@ class Core:
 
         return predict_price
 
-    def train(self):
+    def train(self, df=None):
         logger.info('Train Model')
 
         from sklearn.externals import joblib
@@ -85,9 +85,12 @@ class Core:
 
         np.random.seed(42)
 
-        df = db.get_all_data()
+        if df is None:
+            df = db.get_all_data()
 
-        X = df[['open', 'reddit_sentiment', 'tw_sentiment', 'tw_followers', 'google_sentiment']]
+        X = df[['open', 'reddit_sentiment', 'tw_sentiment', 'tw_followers', 'google_sentiment', 'order_book_bids_price',
+                'order_book_bids_size', 'order_book_bids_num', 'order_book_asks_price', 'order_book_asks_size',
+                'order_book_asks_num']]
         y = df['close'].values.reshape(-1, 1)
 
         scaler_x = joblib.load('model-scaler-x-%s.pkl' % self.product_id)
@@ -122,18 +125,21 @@ class Core:
 
         return history
 
-    def train_scaler(self):
+    def train_scaler(self, df=None):
         logger.info('Train Scaler Model')
 
         from sklearn.preprocessing import MinMaxScaler
         from sklearn.externals import joblib
 
-        df = db.get_all_data()
+        if df is None:
+            df = db.get_all_data()
 
         # delete row
         df.dropna(how='any', inplace=True)
 
-        X = df[['open', 'reddit_sentiment', 'tw_sentiment', 'tw_followers', 'google_sentiment']]
+        X = df[['open', 'reddit_sentiment', 'tw_sentiment', 'tw_followers', 'google_sentiment', 'order_book_bids_price',
+                'order_book_bids_size', 'order_book_bids_num', 'order_book_asks_price', 'order_book_asks_size',
+                'order_book_asks_num']]
         y = df['close'].values.reshape(-1, 1)
 
         scaler_x = MinMaxScaler(feature_range=(-1, 1))
@@ -146,7 +152,7 @@ class Core:
 
         return scaler_x, scaler_y
 
-    def train_anomaly(self):
+    def train_anomaly(self, df=None):
 
         logger.info('Train Anomaly Model')
 
@@ -154,7 +160,8 @@ class Core:
         from sklearn.externals import joblib
         from sklearn.model_selection import GridSearchCV
 
-        df = db.get_all_data()
+        if df is None:
+            df = db.get_all_data()
 
         X = df['volume'].values.reshape(-1, 1)
         params = {'bandwidth': np.logspace(0, df['volume'].max())}
@@ -165,11 +172,13 @@ class Core:
 
         return grid.best_estimator_
 
-    def test_order_percent(self):
+    def test_order_percent(self, df=None):
         from keras.models import load_model
         from sklearn.externals import joblib
+        import pandas as pd
 
-        df = db.get_all_data()
+        if df is None:
+            df = db.get_all_data()
 
         scaler_x = joblib.load('model-scaler-x-%s.pkl' % self.product_id)
         scaler_y = joblib.load('model-scaler-y-%s.pkl' % self.product_id)
@@ -187,6 +196,7 @@ class Core:
         n_test = int(TEST_SIZE * count)
         df_test = df[-n_test:].reset_index()
         count_test = df_test['open'].count()
+        df_predicted = pd.DataFrame(columns=['predicted'])
         for index, row in df_test.iterrows():
 
             if y_predict_last is None:
@@ -195,16 +205,18 @@ class Core:
                 last_volume = row['volume']
 
             x_predict = np.array([row['open'], row['reddit_sentiment'], row['tw_sentiment'], row['tw_followers'],
-                                  row['google_sentiment']]).reshape(1, -1)
-            try:
-                x_predict = scaler_x.transform(x_predict)
-            except ValueError:
-                continue
+                                  row['google_sentiment'], row['order_book_bids_price'], row['order_book_bids_size'],
+                                  row['order_book_bids_num'], row['order_book_asks_price'], row['order_book_asks_size'],
+                                  row['order_book_asks_num']]).reshape(1, -1)
+            x_predict = scaler_x.transform(x_predict)
             x_predict_reshaped = np.reshape(x_predict, (1, 1, x_predict.shape[1]))
             y_predict_r = model.predict(x_predict_reshaped)
             y_predict_r_rescaled = scaler_y.inverse_transform(y_predict_r)
             y_predict_r_rescaled = float("%.2f" % y_predict_r_rescaled)
 
+            df_predicted = df_predicted.append({
+                'predicted': y_predict_r_rescaled
+            }, ignore_index=True)
             predict_order = Prediction.DOWN
             if y_predict_last < y_predict_r_rescaled:
                 predict_order = Prediction.UP
@@ -237,14 +249,14 @@ class Core:
                 last_real_order = real_order
                 continue
 
-            if predict_order == Prediction.UP and last_real_order == Prediction.DOWN:
+            if predict_order == Prediction.UP:
                 if cash > 0 and buy is False:
                     buy = True
                     bitcoin = cash / (row['open'] + 0.1)
                     cash = 0
                     n_api_call = n_api_call + 1
 
-            elif predict_order == Prediction.DOWN and last_real_order == Prediction.DOWN:
+            elif predict_order == Prediction.DOWN:
                 if cash == 0 and buy is True:
                     if cash < bitcoin * row['open']:
                         buy = False
@@ -280,3 +292,5 @@ class Core:
         percent_win_loss = (cash_last - CASH_FIRST) / CASH_FIRST * 100
         logger.info("Without prediction %.2f euros => %.2f%% => %.2f%% / day" % (
             cash_last, percent_win_loss, float(percent_win_loss / n_days)))
+
+        return df_predicted
