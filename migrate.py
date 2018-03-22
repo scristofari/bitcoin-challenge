@@ -38,3 +38,19 @@ def migrate_0002():
     c.execute("DELETE FROM btceur WHERE open == 6767.54")
     conn.commit()
     conn.close()
+
+
+def migrate_0003():
+    print('Add columns')
+    conn = sqlite3.connect('bitcoin.db')
+    c = conn.cursor()
+    c.execute('''ALTER TABLE btceur ADD COLUMN order_book_bids_price REAL DEFAULT 0.0;''')
+    c.execute('''ALTER TABLE btceur ADD COLUMN order_book_bids_size REAL DEFAULT 0.0;''')
+    c.execute('''ALTER TABLE btceur ADD COLUMN order_book_bids_num REAL DEFAULT 0.0;''')
+    c.execute('''ALTER TABLE btceur ADD COLUMN order_book_asks_price REAL DEFAULT 0.0;''')
+    c.execute('''ALTER TABLE btceur ADD COLUMN order_book_asks_size REAL DEFAULT 0.0;''')
+    c.execute('''ALTER TABLE btceur ADD COLUMN order_book_asks_num REAL DEFAULT 0.0;''')
+    conn.commit()
+    conn.close()
+
+migrate_0003()

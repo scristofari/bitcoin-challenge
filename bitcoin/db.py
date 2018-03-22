@@ -4,7 +4,7 @@ import sqlite3
 def insert_data(data):
     conn = sqlite3.connect('bitcoin.db')
     c = conn.cursor()
-    c.execute('INSERT INTO btceur VALUES (?,?,?,?,?,?,?,?,?,?,?)', data)
+    c.execute('INSERT INTO btceur VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', data)
     conn.commit()
     conn.close()
 
