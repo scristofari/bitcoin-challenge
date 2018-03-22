@@ -166,11 +166,6 @@ class Core:
         return grid.best_estimator_
 
     def test_order_percent(self):
-        def last_cash_with_fee(bitcoins):
-            last_price = db.get_last_buy_price()
-            last_cash = last_price * bitcoins
-            return last_cash + (last_cash * 0.5 / 100)
-
         from keras.models import load_model
         from sklearn.externals import joblib
 
@@ -205,7 +200,7 @@ class Core:
                 x_predict = scaler_x.transform(x_predict)
             except ValueError:
                 continue
-            x_predict_reshaped = np.reshape(x_predict, (1, 1, 5))
+            x_predict_reshaped = np.reshape(x_predict, (1, 1, x_predict.shape[1]))
             y_predict_r = model.predict(x_predict_reshaped)
             y_predict_r_rescaled = scaler_y.inverse_transform(y_predict_r)
             y_predict_r_rescaled = float("%.2f" % y_predict_r_rescaled)
