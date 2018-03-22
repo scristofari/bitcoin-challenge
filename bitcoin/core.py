@@ -10,7 +10,7 @@ import bitcoin.db as db
 
 TEST_SIZE = 0.3
 CASH_FIRST = 1000
-
+GAP = 0.01
 
 class Core:
     gdax_client = GdaxClient()
@@ -242,7 +242,7 @@ class Core:
             if cash == 0 and buy is True and anomaly < anomaly_limit and real_order == Prediction.DOWN:
                 n_anomalies = n_anomalies + 1
                 buy = False
-                cash = bitcoin * (row['open'] - 0.1)
+                cash = bitcoin * (row['open'] - GAP)
                 bitcoin = 0
                 n_api_call = n_api_call + 1
                 y_last = row['open']
@@ -252,7 +252,7 @@ class Core:
             if predict_order == Prediction.UP:
                 if cash > 0 and buy is False:
                     buy = True
-                    bitcoin = cash / (row['open'] + 0.1)
+                    bitcoin = cash / (row['open'] + GAP)
                     cash = 0
                     n_api_call = n_api_call + 1
 
@@ -260,7 +260,7 @@ class Core:
                 if cash == 0 and buy is True:
                     if cash < bitcoin * row['open']:
                         buy = False
-                        cash = bitcoin * (row['open'] - 0.1)
+                        cash = bitcoin * (row['open'] - GAP)
                         bitcoin = 0
                         n_api_call = n_api_call + 1
 
