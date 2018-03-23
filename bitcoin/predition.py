@@ -22,7 +22,7 @@ def predict(X):
     """
     x_predict = np.array(X).reshape(1, -1)
     x_predict = scaler_x.transform(x_predict)
-    x_predict = np.reshape(x_predict, (1, 1, x_predict.shape[1]))
+    x_predict = np.reshape(x_predict, (x_predict.shape[0], 1, x_predict.shape[1]))
     y_predict = model.predict(x_predict)
     y_predict = scaler_y.inverse_transform(y_predict)
     y_predict = float("%.2f" % y_predict)
