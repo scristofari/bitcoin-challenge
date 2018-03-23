@@ -4,7 +4,7 @@ from .predition import Prediction, predict
 from .train import train, train_scaler
 
 
-def test_get_error_percent():
+def test_get_error_percent(columns):
     df = get_all_data()
     df_test = df[df['order_book_bids_price'] > 0].reset_index()
 
@@ -15,7 +15,12 @@ def test_get_error_percent():
         open = row['open']
         close = row['close']
 
-        y_predict = predict(open)
+        X = []
+        for c in columns:
+            X.append(row[c])
+
+        logger.info("Predict %d / %d" % (index, count_test))
+        y_predict = predict(X)
 
         predict_order = Prediction.DOWN
         if y_predict > close:
@@ -40,9 +45,16 @@ def test_model():
     df = get_all_data()
     train_scaler(df=df)
 
-    y = df['close'].reshape(-1, 1)
+    y = df[['close']].values.reshape(-1, 1)
 
-    Xs = [df['open'], df['open', 'tw_sentiment']]
-    for X in Xs:
-        train(X, y)
-        test_get_error_percent()
+    columns = [
+        ['open'],
+        ['open', 'tw_sentiment']
+    ]
+
+    Xs = []
+    for c in columns:
+        Xs.append(df[c])
+    for k, X in Xs:
+        #train(X, y)
+        test_get_error_percent(columns[k])
