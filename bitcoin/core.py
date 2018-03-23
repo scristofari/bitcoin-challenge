@@ -12,6 +12,7 @@ TEST_SIZE = 0.3
 CASH_FIRST = 1000
 GAP = 0.01
 
+
 class Core:
     gdax_client = GdaxClient()
     product_id = None
@@ -88,9 +89,7 @@ class Core:
         if df is None:
             df = db.get_all_data()
 
-        X = df[['open', 'reddit_sentiment', 'tw_sentiment', 'tw_followers', 'google_sentiment', 'order_book_bids_price',
-                'order_book_bids_size', 'order_book_bids_num', 'order_book_asks_price', 'order_book_asks_size',
-                'order_book_asks_num']]
+        X = df[['open']]
         y = df['close'].values.reshape(-1, 1)
 
         scaler_x = joblib.load('model-scaler-x-%s.pkl' % self.product_id)
@@ -137,9 +136,7 @@ class Core:
         # delete row
         df.dropna(how='any', inplace=True)
 
-        X = df[['open', 'reddit_sentiment', 'tw_sentiment', 'tw_followers', 'google_sentiment', 'order_book_bids_price',
-                'order_book_bids_size', 'order_book_bids_num', 'order_book_asks_price', 'order_book_asks_size',
-                'order_book_asks_num']]
+        X = df[['open']]
         y = df['close'].values.reshape(-1, 1)
 
         scaler_x = MinMaxScaler(feature_range=(-1, 1))
@@ -173,6 +170,10 @@ class Core:
         return grid.best_estimator_
 
     def test_order_percent(self, df=None):
+
+        def get_cash_0_25(x):
+            return x - (0.25 * x / 100)
+
         from keras.models import load_model
         from sklearn.externals import joblib
         import pandas as pd
@@ -185,10 +186,9 @@ class Core:
 
         model = load_model('./model-%s.h5' % self.product_id)
         model_anomaly = joblib.load('./model-anomaly-%s.pkl' % self.product_id)
-        anomaly_limit = np.exp(model_anomaly.score(np.percentile(df['volume'].values, 75)))
+        anomaly_limit = np.exp(model_anomaly.score(np.percentile(df['volume'].values, 99)))
 
-        buy = False
-        cash = CASH_FIRST
+        last_cash = cash = CASH_FIRST
         bitcoin = n_error = n_anomalies = n_api_call = 0
         last_volume = last_real_order = y_predict_last = y_last = None
 
@@ -196,7 +196,7 @@ class Core:
         n_test = int(TEST_SIZE * count)
         df_test = df[-n_test:].reset_index()
         count_test = df_test['open'].count()
-        df_predicted = pd.DataFrame(columns=['predicted'])
+        df_predicted = pd.DataFrame(columns=['predicted', 'real', 'diff', 'diff_std'])
         for index, row in df_test.iterrows():
 
             if y_predict_last is None:
@@ -204,18 +204,17 @@ class Core:
             if last_volume is None:
                 last_volume = row['volume']
 
-            x_predict = np.array([row['open'], row['reddit_sentiment'], row['tw_sentiment'], row['tw_followers'],
-                                  row['google_sentiment'], row['order_book_bids_price'], row['order_book_bids_size'],
-                                  row['order_book_bids_num'], row['order_book_asks_price'], row['order_book_asks_size'],
-                                  row['order_book_asks_num']]).reshape(1, -1)
+            x_predict = np.array([row['open']]).reshape(1, -1)
             x_predict = scaler_x.transform(x_predict)
             x_predict_reshaped = np.reshape(x_predict, (1, 1, x_predict.shape[1]))
             y_predict_r = model.predict(x_predict_reshaped)
             y_predict_r_rescaled = scaler_y.inverse_transform(y_predict_r)
             y_predict_r_rescaled = float("%.2f" % y_predict_r_rescaled)
-
             df_predicted = df_predicted.append({
-                'predicted': y_predict_r_rescaled
+                'predicted': y_predict_r_rescaled,
+                'real': row['close'],
+                'diff': row['close'] - y_predict_r_rescaled,
+                'diff_std': row['close'] - y_predict_r_rescaled + 9
             }, ignore_index=True)
             predict_order = Prediction.DOWN
             if y_predict_last < y_predict_r_rescaled:
@@ -238,31 +237,27 @@ class Core:
                 last_real_order = real_order
                 continue
 
-            anomaly = np.exp(model_anomaly.score(last_volume))
-            if cash == 0 and buy is True and anomaly < anomaly_limit and real_order == Prediction.DOWN:
-                n_anomalies = n_anomalies + 1
-                buy = False
-                cash = bitcoin * (row['open'] - GAP)
+            last_volume_anomaly = np.exp(model_anomaly.score(last_volume))
+            if last_volume_anomaly < anomaly_limit and real_order == Prediction.DOWN and bitcoin > 0:
+                test_cash = bitcoin * row['open']
+                test_cash = get_cash_0_25(test_cash)
                 bitcoin = 0
                 n_api_call = n_api_call + 1
-                y_last = row['open']
-                last_real_order = real_order
-                continue
+                n_anomalies = n_anomalies + 1
+                last_cash = cash = test_cash
 
-            if predict_order == Prediction.UP:
-                if cash > 0 and buy is False:
-                    buy = True
-                    bitcoin = cash / (row['open'] + GAP)
-                    cash = 0
+            elif predict_order == Prediction.UP and cash > 0:
+                bitcoin = get_cash_0_25(cash) / row['open']
+                cash = 0
+                n_api_call = n_api_call + 1
+
+            elif predict_order == Prediction.DOWN and bitcoin > 0:
+                test_cash = bitcoin * row['open']
+                test_cash = get_cash_0_25(test_cash)
+                if last_cash < test_cash:
+                    bitcoin = 0
                     n_api_call = n_api_call + 1
-
-            elif predict_order == Prediction.DOWN:
-                if cash == 0 and buy is True:
-                    if cash < bitcoin * row['open']:
-                        buy = False
-                        cash = bitcoin * (row['open'] - GAP)
-                        bitcoin = 0
-                        n_api_call = n_api_call + 1
+                    last_cash = cash = test_cash
 
             y_last = row['open']
             last_volume = row['volume']
