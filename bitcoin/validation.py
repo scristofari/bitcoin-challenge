@@ -1,6 +1,7 @@
 from .db import get_all_data
 from .log import logger
 from .predition import Prediction, predict
+from .train import train, train_scaler
 
 
 def test_get_error_percent():
@@ -33,3 +34,13 @@ def test_get_error_percent():
 
     percent = (n_error / count_test) * 100
     logger.info("Error Order percentage: %0.2f%%" % percent)
+
+def test_model():
+    df = get_all_data()
+    train_scaler(df=df)
+
+    X = df['open']
+    y = df['close'].reshape(-1, 1)
+
+    train()
+

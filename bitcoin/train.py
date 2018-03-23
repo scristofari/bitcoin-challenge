@@ -5,7 +5,7 @@ import numpy as np
 TEST_SIZE = 0.3
 
 
-def train(self, df=None):
+def train(X, y):
     logger.info('Train Model')
 
     from sklearn.externals import joblib
@@ -20,14 +20,8 @@ def train(self, df=None):
 
     np.random.seed(42)
 
-    if df is None:
-        df = get_all_data()
-
-    X = df[['open']]
-    y = df['close'].values.reshape(-1, 1)
-
-    scaler_x = joblib.load('model-scaler-x-%s.pkl' % self.product_id)
-    scaler_y = joblib.load('model-scaler-y-%s.pkl' % self.product_id)
+    scaler_x = joblib.load('model-scaler-x-BTC-EUR.pkl')
+    scaler_y = joblib.load('model-scaler-y-BTC-EUR.pkl')
     X_scale = scaler_x.fit_transform(X)
     y_scale = scaler_y.fit_transform(y)
 
@@ -54,12 +48,12 @@ def train(self, df=None):
     history = model.fit(X_train, y_train, batch_size=X_train.shape[0],
                         epochs=100, validation_data=(X_test, y_test), shuffle=False, verbose=True)
 
-    model.save('model-%s.h5' % self.product_id)
+    model.save('model-BTC-EUR.h5')
 
     return history
 
 
-def train_scaler(self, df=None):
+def train_scaler(df=None):
     logger.info('Train Scaler Model')
 
     from sklearn.preprocessing import MinMaxScaler
@@ -79,13 +73,13 @@ def train_scaler(self, df=None):
     scaler_y = MinMaxScaler(feature_range=(-1, 1))
     scaler_y.fit(y)
 
-    joblib.dump(scaler_x, 'model-scaler-x-%s.pkl' % self.product_id)
-    joblib.dump(scaler_y, 'model-scaler-y-%s.pkl' % self.product_id)
+    joblib.dump(scaler_x, 'model-scaler-x-BTC-EUR.pkl')
+    joblib.dump(scaler_y, 'model-scaler-y-BTC-EUR.pkl')
 
     return scaler_x, scaler_y
 
 
-def train_anomaly(self, df=None):
+def train_anomaly(df=None):
     logger.info('Train Anomaly Model')
 
     from sklearn.neighbors import KernelDensity
@@ -100,6 +94,6 @@ def train_anomaly(self, df=None):
     grid = GridSearchCV(KernelDensity(), params, verbose=True, n_jobs=10)
     grid.fit(X)
 
-    joblib.dump(grid.best_estimator_, 'model-anomaly-%s.pkl' % self.product_id)
+    joblib.dump(grid.best_estimator_, 'model-anomaly-BTC-EUR.pkl')
 
     return grid.best_estimator_
