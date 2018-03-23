@@ -35,12 +35,14 @@ def test_get_error_percent():
     percent = (n_error / count_test) * 100
     logger.info("Error Order percentage: %0.2f%%" % percent)
 
+
 def test_model():
     df = get_all_data()
     train_scaler(df=df)
 
-    X = df['open']
     y = df['close'].reshape(-1, 1)
 
-    train()
-
+    Xs = [df['open'], df['open', 'tw_sentiment']]
+    for X in Xs:
+        train(X, y)
+        test_get_error_percent()
