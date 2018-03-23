@@ -8,6 +8,12 @@ class Prediction(Enum):
 
 
 def predict(x):
+    """
+    Predict the new output.
+
+    :param x: A matrix
+    :return: the predicted float
+    """
     import numpy as np
     from keras.models import load_model
     from sklearn.externals import joblib
