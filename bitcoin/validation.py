@@ -5,8 +5,6 @@ from .train import train, train_scaler, train_anomaly
 from datetime import datetime
 import pandas as pd
 
-REGUL = 0.569999999999709
-
 
 def test_computed(columns):
     df = get_all_data()
@@ -50,7 +48,7 @@ def test_model():
     test_money(regul=regul)
 
 
-def test_money(regul=REGUL):
+def test_money(regul=0.0):
     from sklearn.externals import joblib
     import numpy as np
 
