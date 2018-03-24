@@ -4,6 +4,8 @@ from .sentiment import Sentiment
 from bitcoin.log import logger
 import bitcoin.db as db
 
+REGUL = 0.569999999999709
+
 
 class Core:
     gdax_client = GdaxClient()
