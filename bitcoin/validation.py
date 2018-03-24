@@ -5,14 +5,8 @@ from .train import train, train_scaler
 import pandas as pd
 
 
-def test_computed(columns):
-    df = get_all_data()
-    # df = df[df['order_book_bids_price'] > 0].reset_index()
-
-    count = df['open'].count()
-    n_tests = int(0.3 * count)
-
-    df_test = df[-n_tests:].reset_index()
+def test_computed(columns, df_test=None):
+    df_test = df_test.reset_index()
     count_test = df_test['open'].count()
     logger.info('Test set of %d items !' % count_test)
     p = Prediction()
@@ -32,15 +26,22 @@ def test_computed(columns):
             'diff': close - y_predict
         }, ignore_index=True)
 
+    regul = df_computed['diff'].median()
+    df_computed['predicted_regul'] = df_computed['predicted'] + regul
+    df_computed['diff_regul'] = df_computed['real'] - (df_computed['predicted'] + regul)
+
     logger.info('Done !')
-    return df_computed
+    return df_computed, regul
 
 
 def test_model():
+    import numpy as np
+
     df = get_all_data()
-    # df = df[df['order_book_bids_price'] > 0].reset_index()
+    df_train, df_test = np.split(df.sample(frac=1), [int(.8 * len(df))])
     train_scaler(df=df)
-    y = df[['close']].values.reshape(-1, 1)
+    y = df_train[['close']].values.reshape(-1, 1)
     columns = ['open']
-    #train(df[columns].values, y)
-    return test_computed(columns)
+    history = train(df_train[columns].values, y)
+
+    return test_computed(columns, df_test=df_test), history
