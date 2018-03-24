@@ -22,8 +22,8 @@ def train(X, y):
 
     scaler_x = joblib.load('model-scaler-x-BTC-EUR.pkl')
     scaler_y = joblib.load('model-scaler-y-BTC-EUR.pkl')
-    X_scale = scaler_x.fit_transform(X)
-    y_scale = scaler_y.fit_transform(y)
+    X_scale = scaler_x.transform(X)
+    y_scale = scaler_y.transform(y)
 
     X_train, X_test, y_train, y_test = train_test_split(X_scale, y_scale, test_size=TEST_SIZE, shuffle=False)
 
@@ -46,7 +46,7 @@ def train(X, y):
 
     model.compile(loss='mae', optimizer='adam', metrics=['mse', 'mae'])
     history = model.fit(X_train, y_train, batch_size=X_train.shape[0],
-                        epochs=100, validation_data=(X_test, y_test), shuffle=False, verbose=False)
+                        epochs=100, validation_data=(X_test, y_test), shuffle=False, verbose=True)
 
     model.save('model-BTC-EUR.h5')
 
