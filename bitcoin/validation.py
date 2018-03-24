@@ -2,13 +2,13 @@ from .db import get_all_data
 from .log import logger
 from .predition import Prediction
 from .train import train, train_scaler
+import pandas as pd
 
 
-def test_get_error_percent(columns):
+def test_computed(columns):
     df = get_all_data()
     df = df[df['order_book_bids_price'] > 0].reset_index()
 
-    n_error = 0
     count = df['open'].count()
     n_tests = int(0.3 * count)
 
@@ -16,8 +16,8 @@ def test_get_error_percent(columns):
     count_test = df_test['open'].count()
     logger.info('Test set of %d items !' % count_test)
     p = Prediction()
+    df_computed = pd.DataFrame(columns=['real', 'predicted', 'diff'])
     for index, row in df_test.iterrows():
-        open = row['open']
         close = row['close']
 
         X = []
@@ -26,21 +26,13 @@ def test_get_error_percent(columns):
 
         y_predict = p.predict(X, load_model=(index == 0))
 
-        predict_order = Prediction.DOWN
-        if y_predict > open:
-            predict_order = Prediction.UP
+        df_computed = df_computed.append({
+            'real': close,
+            'predicted': y_predict,
+            'diff': close - y_predict
+        }, ignore_index=True)
 
-        real_order = Prediction.DOWN
-        if close > open:
-            real_order = Prediction.UP
-
-        if predict_order != real_order:
-            n_error = n_error + 1
-
-    percent = (n_error / count_test) * 100
-    logger.info("Error Order percentage: %0.2f%%" % percent)
-
-    return percent
+    return df_computed
 
 
 def test_model():
@@ -49,5 +41,5 @@ def test_model():
     train_scaler(df=df)
     y = df[['close']].values.reshape(-1, 1)
     columns = ['open']
-    # train(df[columns].values, y)
-    test_get_error_percent(columns)
+    train(df[columns].values, y)
+    return test_computed(columns)
