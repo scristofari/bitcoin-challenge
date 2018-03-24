@@ -1,7 +1,8 @@
 from .db import get_all_data
 from .log import logger
 from .predition import Prediction
-from .train import train, train_scaler
+from .train import train, train_scaler, train_anomaly
+from datetime import datetime
 import pandas as pd
 
 REGUL = 0.569999999999709
@@ -40,30 +41,63 @@ def test_computed(columns):
 def test_model():
     df = get_all_data()
     train_scaler(df=df)
+    train_anomaly(df=df)
+
     y = df[['close']].values.reshape(-1, 1)
     columns = ['open']
     history = train(df[columns].values, y)
+    (df, regul), history = test_computed(columns), history
+    test_money(regul=regul)
+    test_money(regul=0.0)
 
-    return test_computed(columns), history
 
+def test_money(regul=REGUL):
+    from sklearn.externals import joblib
+    import numpy as np
 
-def test_money():
     df = get_all_data()
     df_test = df[-int(.3 * len(df)):].reset_index()
     p = Prediction()
-    cash = 1000
-    bitcoins = last_bitcoin =  0
+    last_cash = cash = 1000
+    bitcoins = last_bitcoin = last_price = last_volume = 0
+    model_anomaly = joblib.load('./model-anomaly-BTC-EUR.pkl')
+    anomaly_limit = np.exp(model_anomaly.score(np.percentile(df['volume'].values, 75)))
+
     for index, row in df_test.iterrows():
         open = row['open']
         close = last_bitcoin = row['close']
-        y_predict = p.predict(open, regul=REGUL, load_model=(index == 0))
-        if open < y_predict < close and bitcoins > 0:
+        if last_volume == 0:
+            last_volume = row['volume']
+            last_price = row['open']
+        y_predict = p.predict(open, regul=regul, load_model=(index == 0))
+
+        anomaly = np.exp(model_anomaly.score(last_volume))
+        if bitcoins > 0 and anomaly < anomaly_limit and last_price > open > close:
+            logger.info('ANOMALY -> SELL')
+            cash = (open - 0.01) * bitcoins
+            bitcoins = 0
+        if open <= y_predict < close and cash > 0:
+            logger.info('BUY')
+            last_cash = cash
             bitcoins = cash / y_predict
             cash = 0
-        elif open >= y_predict > close and cash > 0:
+        elif open >= y_predict > close and last_cash < bitcoins * y_predict and bitcoins > 0:
+            logger.info('SELL')
             cash = bitcoins * y_predict
+            bitcoins = 0
+
+        last_volume = row['volume']
+        last_price = row['open']
 
     if cash == 0:
         cash = bitcoins * last_bitcoin
 
-    print(cash)
+    from_date = datetime.fromtimestamp(df_test[0:1]['time'].values).strftime('%Y-%m-%d %H:%M:%S')
+    to_date = datetime.fromtimestamp(df_test[-1:]['time'].values).strftime('%Y-%m-%d %H:%M:%S')
+    logger.info("TEST From %s to %s" % (from_date, to_date))
+
+    logger.info("With prediction %.2f euros" % (cash))
+
+    bitcoin_first = 1000 / df_test[0:1]['open'].values
+    cash_last = bitcoin_first * float(df_test[-1:]['open'].values)
+    logger.info("Without prediction %.2f euros" % cash_last)
