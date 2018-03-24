@@ -48,7 +48,6 @@ def test_model():
     history = train(df[columns].values, y)
     (df, regul), history = test_computed(columns), history
     test_money(regul=regul)
-    test_money(regul=0.0)
 
 
 def test_money(regul=REGUL):
