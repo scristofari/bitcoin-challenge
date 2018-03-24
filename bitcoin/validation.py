@@ -16,12 +16,9 @@ def test_get_error_percent(columns):
     count_test = df_test['open'].count()
     logger.info('Test set of %d items !' % count_test)
     p = Prediction()
-    last_predict = None
     for index, row in df_test.iterrows():
         open = row['open']
         close = row['close']
-        if last_predict is None:
-            last_predict = row['close']
 
         X = []
         for c in columns:
@@ -30,9 +27,9 @@ def test_get_error_percent(columns):
         y_predict = p.predict(X, load_model=(index == 0))
 
         predict_order = Prediction.DOWN
-        if y_predict > last_predict:
+        if y_predict > close:
             predict_order = Prediction.UP
-        elif y_predict == last_predict:
+        elif y_predict == open:
             predict_order = Prediction.STAY
 
         real_order = Prediction.DOWN
@@ -44,7 +41,7 @@ def test_get_error_percent(columns):
         if predict_order != real_order:
             n_error = n_error + 1
 
-        last_predict = y_predict
+        last_predict
 
     percent = (n_error / count_test) * 100
     logger.info("Error Order percentage: %0.2f%%" % percent)
@@ -54,12 +51,14 @@ def test_get_error_percent(columns):
 
 def test_model():
     df = get_all_data()
-    #df = df[df['order_book_bids_price'] > 0].reset_index()
+    df = df[df['order_book_bids_price'] > 0].reset_index()
 
     train_scaler(df=df)
 
     y = df[['close']].values.reshape(-1, 1)
 
-    columns = ['open', 'tw_sentiment', 'tw_followers', 'reddit_sentiment']
+    columns = ['open', 'tw_sentiment', 'tw_followers', 'reddit_sentiment', 'order_book_bids_price',
+               'order_book_bids_num', 'order_book_bids_size', 'order_book_asks_price', 'order_book_asks_num',
+               'order_book_asks_size']
     train(df[columns].values, y)
-    test_get_error_percent(columns)
+    percent = test_get_error_percent(columns)
