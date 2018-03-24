@@ -7,7 +7,7 @@ import pandas as pd
 
 def test_computed(columns):
     df = get_all_data()
-    df = df[df['order_book_bids_price'] > 0].reset_index()
+    # df = df[df['order_book_bids_price'] > 0].reset_index()
 
     count = df['open'].count()
     n_tests = int(0.3 * count)
@@ -32,6 +32,7 @@ def test_computed(columns):
             'diff': close - y_predict
         }, ignore_index=True)
 
+    logger.info('Done !')
     return df_computed
 
 
@@ -41,5 +42,5 @@ def test_model():
     train_scaler(df=df)
     y = df[['close']].values.reshape(-1, 1)
     columns = ['open']
-    train(df[columns].values, y)
+    #train(df[columns].values, y)
     return test_computed(columns)
