@@ -41,8 +41,6 @@ def test_get_error_percent(columns):
         if predict_order != real_order:
             n_error = n_error + 1
 
-        last_predict
-
     percent = (n_error / count_test) * 100
     logger.info("Error Order percentage: %0.2f%%" % percent)
 
@@ -61,4 +59,4 @@ def test_model():
                'order_book_bids_num', 'order_book_bids_size', 'order_book_asks_price', 'order_book_asks_num',
                'order_book_asks_size']
     train(df[columns].values, y)
-    percent = test_get_error_percent(columns)
+    test_get_error_percent(columns)
