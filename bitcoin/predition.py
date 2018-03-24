@@ -8,9 +8,11 @@ class Prediction:
 
     scaler_x = scaler_y = model = None
 
-    def predict(self, X, load_model=True):
+    def predict(self, X, regul=0.0, load_model=True):
         """
+
         :param X:
+        :param regul:
         :param load_model:
         :return:
         """
@@ -29,4 +31,4 @@ class Prediction:
         y_predict = self.scaler_y.inverse_transform(y_predict)
         y_predict = float("%.2f" % y_predict)
 
-        return y_predict
+        return y_predict + regul
