@@ -46,7 +46,7 @@ def train(X, y):
 
     model.compile(loss='mae', optimizer='adam', metrics=['mse', 'mae'])
     history = model.fit(X_train, y_train, batch_size=X_train.shape[0],
-                        epochs=100, validation_data=(X_test, y_test), shuffle=False, verbose=True)
+                        epochs=50, validation_data=(X_test, y_test), shuffle=False, verbose=True)
 
     model.save('model-BTC-EUR.h5')
 

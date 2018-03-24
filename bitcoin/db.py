@@ -62,6 +62,7 @@ def insert_next_buy(price):
     conn.commit()
     conn.close()
 
+
 def get_last_buy_price():
     conn = sqlite3.connect('bitcoin.db')
     c = conn.cursor()
@@ -88,6 +89,12 @@ def get_all_data():
     conn.close()
 
     # @todo Hack, replace zeros by NaN and fill forward.
+    def log(x):
+        if isinstance(x, bytes):
+            return 0.0
+        return x
+
+    df['google_sentiment'] = df['google_sentiment'].apply(log)
     df['google_sentiment'] = df['google_sentiment'].replace(0.0, np.NaN)
     df['google_sentiment'] = df['google_sentiment'].fillna(method='ffill')
 
