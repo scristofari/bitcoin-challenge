@@ -44,9 +44,9 @@ def test_model():
 
     y = df[['close']].values.reshape(-1, 1)
     columns = ['open', 'tw_sentiment', 'tw_followers']
-    history = train(df[columns].values, y)
-    (df, regul), history = test_computed(columns), history
-    test_money(columns, regul=regul)
+    #history = train(df[columns].values, y)
+    #(df, regul), history = test_computed(columns), history
+    test_money(columns, regul=0.0)
 
 
 def test_money(columns, regul=0.0):
@@ -85,7 +85,7 @@ def test_money(columns, regul=0.0):
             cash = 0
         elif open <= y_predict < close and last_cash < bitcoins * y_predict and bitcoins > 0:
             logger.info('SELL')
-            cash = bitcoins * (open + 0.01)
+            cash = bitcoins * y_predict
             bitcoins = 0
 
         last_volume = row['volume']
