@@ -71,16 +71,16 @@ def test_money(regul=0.0):
         anomaly = np.exp(model_anomaly.score(last_volume))
         if bitcoins > 0 and anomaly < anomaly_limit and last_price > open < close:
             logger.info('ANOMALY -> SELL')
-            cash = (open - 0.01) * bitcoins
+            cash = (open + 0.01) * bitcoins
             bitcoins = 0
         elif open >= y_predict > close and cash > 0:
             logger.info('BUY')
             last_cash = cash
-            bitcoins = cash / y_predict
+            bitcoins = cash / (open - 0.01)
             cash = 0
         elif open <= y_predict < close and last_cash < bitcoins * y_predict and bitcoins > 0:
             logger.info('SELL')
-            cash = bitcoins * y_predict
+            cash = bitcoins * (open + 0.01)
             bitcoins = 0
 
         last_volume = row['volume']
