@@ -32,6 +32,7 @@ def test_computed(columns):
     df_computed['predicted_regul'] = df_computed['predicted'] + regul
     df_computed['diff_regul'] = df_computed['real'] - (df_computed['predicted'] + regul)
 
+    logger.info('Regul %f !' % regul)
     logger.info('Done !')
     return df_computed, regul
 
@@ -39,16 +40,16 @@ def test_computed(columns):
 def test_model():
     df = get_all_data()
     train_scaler(df=df)
-    train_anomaly(df=df)
+    #train_anomaly(df=df)
 
     y = df[['close']].values.reshape(-1, 1)
-    columns = ['open']
+    columns = ['open', 'tw_sentiment', 'tw_followers']
     history = train(df[columns].values, y)
     (df, regul), history = test_computed(columns), history
-    test_money(regul=regul)
+    test_money(columns, regul=regul)
 
 
-def test_money(regul=0.0):
+def test_money(columns, regul=0.0):
     from sklearn.externals import joblib
     import numpy as np
 
@@ -58,25 +59,29 @@ def test_money(regul=0.0):
     last_cash = cash = 1000
     bitcoins = last_bitcoin = last_price = last_volume = 0
     model_anomaly = joblib.load('./model-anomaly-BTC-EUR.pkl')
-    anomaly_limit = np.exp(model_anomaly.score(np.percentile(df['volume'].values, 75)))
+    anomaly_limit = np.exp(model_anomaly.score(np.percentile(df['volume'].values, 99)))
 
     for index, row in df_test.iterrows():
         open = row['open']
         close = last_bitcoin = row['close']
+        X = []
+        for c in columns:
+            X.append(row[c])
+
         if last_volume == 0:
             last_volume = row['volume']
             last_price = row['open']
-        y_predict = p.predict(open, regul=regul, load_model=(index == 0))
+        y_predict = p.predict(X, regul=regul, load_model=(index == 0))
 
         anomaly = np.exp(model_anomaly.score(last_volume))
-        if bitcoins > 0 and anomaly < anomaly_limit and last_price > open < close:
-            logger.info('ANOMALY -> SELL')
-            cash = (open + 0.01) * bitcoins
-            bitcoins = 0
-        elif open >= y_predict > close and cash > 0:
+        # if bitcoins > 0 and anomaly < anomaly_limit and last_price > open < close:
+        #    logger.info('ANOMALY -> SELL')
+        #    cash = (open + 0.01) * bitcoins
+        #    bitcoins = 0
+        if open >= y_predict > close and cash > 0:
             logger.info('BUY')
             last_cash = cash
-            bitcoins = cash / (open - 0.01)
+            bitcoins = cash / y_predict
             cash = 0
         elif open <= y_predict < close and last_cash < bitcoins * y_predict and bitcoins > 0:
             logger.info('SELL')
