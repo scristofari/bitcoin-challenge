@@ -15,16 +15,6 @@ class BitCoinChallenge(cmd.Cmd):
         t1 = time.time()
         print("TOTAL execution time : %d s" % (t1 - t0))
 
-    def do_train(self, arg):
-        c = Core()
-        c.train()
-        c.train_anomaly()
-        c.train_scaler()
-
-    def do_test(self, arg):
-        c = Core()
-        c.test_order_percent()
-
     def do_tick(self, arg):
         print(GdaxClient().get_product_ticker('BTC-EUR'))
 
