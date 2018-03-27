@@ -96,6 +96,10 @@ def get_all_data():
     df['google_sentiment'] = df['google_sentiment'].fillna(method='ffill')
 
     df.dropna(how='any', inplace=True)
+
+    df['up'] = df['open'] < df['close']
+    df['up'] = df['up'].replace(False, 0)
+    df['up'] = df['up'].replace(True, 1)
     return df
 
 
@@ -108,3 +112,28 @@ def get_last_real_gnews_sentiment():
     conn.close()
 
     return result[0]
+
+
+def get_all_data_from_pas(pas=5):
+    import pandas as pd
+
+    df = get_all_data()
+
+    df_60 = pd.DataFrame(columns=['open', 'tw_sentiment', 'reddit_sentiment', 'google_sentiment'])
+    for index, row in df.iterrows():
+        if index % pas == 0:
+            try:
+                close = df['open'][index + (pas - 1)]
+            except KeyError:
+                close = row['close']
+            df_60 = df_60.append({
+                'open': row['open'],
+                'tw_sentiment': row['tw_sentiment'],
+                'reddit_sentiment': row['reddit_sentiment'],
+                'google_sentiment': row['google_sentiment'],
+                'close': close,
+            }, ignore_index=True)
+    df_60['up'] = df_60['open'] < df_60['close']
+    df_60['up'] = df_60['up'].replace(False, 0)
+    df_60['up'] = df_60['up'].replace(True, 1)
+    return df_60

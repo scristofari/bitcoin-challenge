@@ -1,3 +1,3 @@
 import bitcoin.validation as val
 
-val.test_model()
+df = val.test_model()

@@ -97,3 +97,35 @@ def train_anomaly(df=None):
     joblib.dump(grid.best_estimator_, 'model-anomaly-BTC-EUR.pkl')
 
     return grid.best_estimator_
+
+
+def train_classification(X, y):
+    logger.info('Train Classification Model')
+
+    from sklearn.model_selection import train_test_split
+
+    from keras import regularizers
+    from keras.models import Sequential
+    from keras.layers import Dense
+    from keras.layers import LSTM
+    from keras.layers import Dropout
+
+    np.random.seed(42)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=TEST_SIZE, shuffle=False)
+
+    model = Sequential()
+    model.add(Dense(100, activation='relu', input_dim=2))
+    model.add(Dense(1, activation='sigmoid'))
+    model.summary()
+
+    model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
+    history = model.fit(X_train, y_train, batch_size=X_train.shape[0],
+                        epochs=10, validation_data=(X_test, y_test), shuffle=False, verbose=True)
+
+    #model.save('model-class-BTC-EUR.h5')
+
+    scores = model.evaluate(X_test, y_test, verbose=0)
+    print("Accuracy: %.2f%%" % (scores[1] * 100))
+
+    return history

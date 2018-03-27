@@ -1,13 +1,12 @@
-from .db import get_all_data
+from .db import get_all_data, get_all_data_from_pas
 from .log import logger
 from .predition import Prediction
-from .train import train, train_scaler, train_anomaly
+from .train import train, train_scaler, train_anomaly, train_classification
 from datetime import datetime
 import pandas as pd
 
 
-def test_computed(columns):
-    df = get_all_data()
+def test_computed(df, columns):
     df_test = df[-int(.3 * len(df)):]
     df_test = df_test.reset_index()
     logger.info('Test set of %d items !' % len(df_test))
@@ -38,15 +37,14 @@ def test_computed(columns):
 
 
 def test_model():
-    df = get_all_data()
+    df = get_all_data_from_pas(pas=30)
     train_scaler(df=df)
     # train_anomaly(df=df)
-
     y = df[['close']].values.reshape(-1, 1)
     columns = ['open']
-    # history = train(df[columns].values, y)
-    # (df, regul), history = test_computed(columns), history
-    test_money_fee(columns, regul=1.3)
+    history = train(df[columns].values, y)
+    (df, regul), history = test_computed(df, columns), history
+    test_money_fee(df, columns, regul=regul)
 
 
 def test_money(columns, regul=0.0):
@@ -67,7 +65,6 @@ def test_money(columns, regul=0.0):
 
         if open >= y_predict > close and cash > 0:
             logger.info('BUY')
-            last_cash = cash
             bitcoins = cash / y_predict
             cash = 0
         elif open >= y_predict < close and bitcoins > 0:
@@ -89,8 +86,7 @@ def test_money(columns, regul=0.0):
     logger.info("Without prediction %.2f euros" % cash_last)
 
 
-def test_money_fee(columns, regul=0.0):
-    df = get_all_data()
+def test_money_fee(columns, df, regul=0.0):
     df_test = df[-int(.3 * len(df)):].reset_index()
     p = Prediction()
     last_cash = cash = 1000
@@ -132,3 +128,39 @@ def test_money_fee(columns, regul=0.0):
     bitcoin_first = 1000 / df_test[0:1]['open'].values
     cash_last = bitcoin_first * float(df_test[-1:]['open'].values)
     logger.info("Without prediction %.2f euros" % cash_last)
+
+
+def test_class_model():
+    df = get_all_data_from_pas(pas=30)
+    train_scaler(df=df)
+    columns = ['open', 'google_sentiment']
+    train_classification(df[columns].values, df[['up']].values)
+
+
+def how_many_up_and_down():
+    df = get_all_data()
+    result = pd.DataFrame(columns=['n', 'side', 'percent'])
+    n = 0
+    last_side = None
+    last_price = None
+    for _, row in df.iterrows():
+        if last_side is None:
+            last_side = row['up']
+            last_price = row['open']
+        side = row['up']
+        if last_side == side:
+            n = n + 1
+        else:
+            percent = 100 * (row['open'] - last_price) / last_price
+            print("%.2f => %s => %.2f%%" % (n, last_side, percent))
+            result = result.append({
+                'n': n,
+                'side': last_side,
+                'percent': percent
+            }, ignore_index=True)
+            n = 1
+            last_price = row['open']
+        last_side = side
+
+    print("n => median => %d" % int(result['n'].median()))
+    return result
