@@ -127,6 +127,7 @@ def get_all_data_from_pas(pas=5):
             except KeyError:
                 close = row['close']
             df_60 = df_60.append({
+                'time': row['time'],
                 'open': row['open'],
                 'tw_sentiment': row['tw_sentiment'],
                 'reddit_sentiment': row['reddit_sentiment'],

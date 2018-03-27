@@ -103,18 +103,16 @@ def test_money_fee(columns, df, regul=0.0):
 
         if open <= y_predict and cash > 0:
             logger.info('BUY')
-            cash = cash - (.001 * cash / 100)
+            cash = cash - (.25 * cash / 100)
             bitcoins = cash / open
             cash = 0
             last_cash = cash
         elif open >= y_predict < close and bitcoins > 0:
-            cash = bitcoins * open
-            cash = cash - (.001 * cash / 100)
-            if cash > last_cash:
+            cash_test = bitcoins * open
+            cash_test = cash_test - (.25 * cash / 100)
+            if cash_test > last_cash:
                 logger.info('SELL')
                 bitcoins = 0
-            else:
-                cash = last_cash
 
     if cash == 0:
         cash = bitcoins * last_bitcoin
