@@ -113,6 +113,7 @@ def test_money_fee(columns, df, regul=0.0):
             if cash_test > last_cash:
                 logger.info('SELL')
                 bitcoins = 0
+                cash = cash_test
 
     if cash == 0:
         cash = bitcoins * last_bitcoin
