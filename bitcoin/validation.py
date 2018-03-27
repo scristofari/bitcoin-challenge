@@ -94,7 +94,7 @@ def test_money_fee(columns, df, regul=0.0):
 
     for index, row in df_test.iterrows():
         open = row['open']
-        close = last_bitcoin = row['close']
+        last_bitcoin = row['close']
         X = []
         for c in columns:
             X.append(row[c])
@@ -107,10 +107,11 @@ def test_money_fee(columns, df, regul=0.0):
             bitcoins = cash / open
             last_cash = cash
             cash = 0
-        elif open >= y_predict < close and bitcoins > 0:
+        elif open > y_predict and bitcoins > 0:
             cash_test = bitcoins * open
             cash_test = cash_test - (.25 * cash / 100)
-            if cash_test > last_cash:
+            if cash_test > last_cash + (.25 * last_cash / 100):
+                print(cash_test - last_cash)
                 logger.info('SELL')
                 bitcoins = 0
                 cash = cash_test
