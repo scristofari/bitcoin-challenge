@@ -47,11 +47,10 @@ def test_model():
     test_money_fee(df, columns, regul=regul)
 
 
-def test_money(columns, regul=0.0):
-    df = get_all_data()
+def test_money(columns, df, regul=0.0):
     df_test = df[-int(.3 * len(df)):].reset_index()
     p = Prediction()
-    cash = 1000
+    last_cash = cash = 1000
     bitcoins = last_bitcoin = 0
 
     for index, row in df_test.iterrows():
@@ -66,8 +65,9 @@ def test_money(columns, regul=0.0):
         if open >= y_predict > close and cash > 0:
             logger.info('BUY')
             bitcoins = cash / y_predict
+            last_cash = cash
             cash = 0
-        elif open >= y_predict < close and bitcoins > 0:
+        elif open >= y_predict < close and bitcoins > 0 and last_cash < bitcoins * y_predict:
             logger.info('SELL')
             cash = bitcoins * y_predict
             bitcoins = 0
@@ -105,8 +105,8 @@ def test_money_fee(columns, df, regul=0.0):
             logger.info('BUY')
             cash = cash - (.25 * cash / 100)
             bitcoins = cash / open
-            cash = 0
             last_cash = cash
+            cash = 0
         elif open >= y_predict < close and bitcoins > 0:
             cash_test = bitcoins * open
             cash_test = cash_test - (.25 * cash / 100)
