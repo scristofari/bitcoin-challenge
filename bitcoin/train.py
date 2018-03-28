@@ -104,12 +104,9 @@ def train_classification(X, y):
 
     from sklearn.externals import joblib
     from sklearn.model_selection import train_test_split
-
-    from keras import regularizers
+    
     from keras.models import Sequential
     from keras.layers import Dense
-    from keras.layers import LSTM
-    from keras.layers import Dropout
 
     np.random.seed(42)
    
@@ -118,25 +115,14 @@ def train_classification(X, y):
 
     X_train, X_test, y_train, y_test = train_test_split(X_scale, y, test_size=TEST_SIZE, shuffle=False)
 
-    X_train = np.reshape(X_train, (X_train.shape[0], 1, X_train.shape[1]))
-    X_test = np.reshape(X_test, (X_test.shape[0], 1, X_test.shape[1]))
-
     model = Sequential()
-    model.add(LSTM(200, input_shape=(X_train.shape[1], X_train.shape[2]), return_sequences=True,
-                   recurrent_regularizer=regularizers.l1(), activation='relu'))
-    model.add(Dropout(0.2))
-    model.add(LSTM(200, return_sequences=True,
-                   recurrent_regularizer=regularizers.l1(), activation='relu'))
-    model.add(Dropout(0.2))
-    model.add(LSTM(200, return_sequences=False,
-                   recurrent_regularizer=regularizers.l1(), activation='relu'))
-    model.add(Dropout(0.2))
+    model.add(Dense(100, input_dim=X_train.shape[1], activation='sigmoid'))
     model.add(Dense(1, activation='sigmoid'))
     model.summary()
 
     model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
     history = model.fit(X_train, y_train, batch_size=X_train.shape[0],
-                        epochs=100, validation_data=(X_test, y_test), shuffle=False, verbose=True)
+                        epochs=1, validation_data=(X_test, y_test), shuffle=True, verbose=True)
 
     model.save('model-class-BTC-EUR.h5')
 
