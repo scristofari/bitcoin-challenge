@@ -142,5 +142,4 @@ def train_classification(X, y):
 
     scores = model.evaluate(X_test, y_test, verbose=True)
     print("Accuracy: %.2f%%" % (scores[1] * 100))
-
     return history
