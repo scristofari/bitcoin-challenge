@@ -36,17 +36,6 @@ def test_computed(df, columns):
     return df_computed, regul
 
 
-def test_model():
-    df = get_all_data_from_pas(pas=30)
-    train_scaler(df=df)
-    # train_anomaly(df=df)
-    y = df[['close']].values.reshape(-1, 1)
-    columns = ['open']
-    history = train(df[columns].values, y)
-    (df, regul), history = test_computed(df, columns), history
-    test_money_fee(df, columns, regul=regul)
-
-
 def test_money(columns, df, regul=0.0):
     df_test = df[-int(.3 * len(df)):].reset_index()
     p = Prediction()
@@ -110,11 +99,60 @@ def test_money_fee(columns, df, regul=0.0):
         elif open > y_predict and bitcoins > 0:
             cash_test = bitcoins * open
             cash_test = cash_test - (.25 * cash / 100)
-            if cash_test > last_cash + (.25 * last_cash / 100):
-                print(cash_test - last_cash)
+            logger.info('SELL')
+            bitcoins = 0
+            cash = cash_test
+
+    if cash == 0:
+        cash = bitcoins * last_bitcoin
+
+    from_date = datetime.fromtimestamp(df_test[0:1]['time'].values).strftime('%Y-%m-%d %H:%M:%S')
+    to_date = datetime.fromtimestamp(df_test[-1:]['time'].values).strftime('%Y-%m-%d %H:%M:%S')
+    logger.info("TEST From %s to %s" % (from_date, to_date))
+
+    logger.info("With prediction %.2f euros" % (cash))
+
+    bitcoin_first = 1000 / df_test[0:1]['open'].values
+    cash_last = bitcoin_first * float(df_test[-1:]['open'].values)
+    logger.info("Without prediction %.2f euros" % cash_last)
+
+    
+def test_money_step(df, num=1):
+    df_test = df[-int(.3 * len(df)):].reset_index()
+    p = Prediction()
+    last_cash = cash = 1000
+    bitcoins = last_bitcoin = 0
+    nu = nd = i = 0
+    for index, row in df_test.iterrows():
+        if index == i:
+            side = row['close'] - row['open']
+            if side < 0:
+                i = i + 1
+                continue
+        open = row['open']
+        last_bitcoin = row['close']
+        if side > 0 and cash > 0:
+            nd = 0
+            nu = nu + 1
+            if nu == num:
+                logger.info('BUY')
+                cash = cash - (.25 * cash / 100)
+                bitcoins = cash / open
+                last_cash = cash
+                cash = 0
+                side = -1
+                nu = 0
+        elif side < 0 and bitcoins > 0:
+            nu = 0
+            nd = nd + 1
+            if nd == num:
+                cash_test = bitcoins * open
+                cash_test = cash_test - (.25 * cash / 100)
                 logger.info('SELL')
                 bitcoins = 0
                 cash = cash_test
+                side = 1
+                nd = 0
 
     if cash == 0:
         cash = bitcoins * last_bitcoin
@@ -130,15 +168,9 @@ def test_money_fee(columns, df, regul=0.0):
     logger.info("Without prediction %.2f euros" % cash_last)
 
 
-def test_class_model():
-    df = get_all_data_from_pas(pas=30)
-    train_scaler(df=df)
-    columns = ['open', 'google_sentiment']
-    train_classification(df[columns].values, df[['up']].values)
-
-
-def how_many_up_and_down():
-    df = get_all_data()
+def how_many_up_and_down(df=None):
+    if df is None:
+        return
     result = pd.DataFrame(columns=['n', 'side', 'percent'])
     n = 0
     last_side = None
@@ -152,7 +184,6 @@ def how_many_up_and_down():
             n = n + 1
         else:
             percent = 100 * (row['open'] - last_price) / last_price
-            print("%.2f => %s => %.2f%%" % (n, last_side, percent))
             result = result.append({
                 'n': n,
                 'side': last_side,

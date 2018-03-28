@@ -134,6 +134,9 @@ def get_all_data_from_pas(pas=5):
                 'google_sentiment': row['google_sentiment'],
                 'close': close,
             }, ignore_index=True)
+
+    diff = df_60['close'] - df_60['open']
+    df_60['percent'] = diff / df_60['open'] * 100
     df_60['up'] = df_60['open'] < df_60['close']
     df_60['up'] = df_60['up'].replace(False, 0)
     df_60['up'] = df_60['up'].replace(True, 1)
