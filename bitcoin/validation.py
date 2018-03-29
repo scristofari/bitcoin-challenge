@@ -195,3 +195,43 @@ def how_many_up_and_down(df=None):
 
     print("n => median => %d" % int(result['n'].median()))
     return result
+
+
+def order_up_and_down(df, percent):
+    from sklearn.externals import joblib
+    import numpy as np
+    
+    df = get_all_data()
+    cash = 1000
+    last_bitcoins = bitcoins = 0
+    model_anomaly = joblib.load('./model-anomaly-BTC-EUR.pkl')
+    anomaly_limit = np.exp(model_anomaly.score(np.percentile(df['volume'], percent)))
+    for _, row in df.iterrows():
+        open = row['open']
+        last_bitcoin = row['close']
+        va = np.exp(model_anomaly.score(row['volume']))
+        if va < anomaly_limit and row['open'] > row['close'] and cash > 0:
+                logger.info('BUY')
+                cash = cash - (.25 * cash / 100)
+                bitcoins = cash / open
+                last_cash = cash
+                cash = 0
+        elif va < anomaly_limit and row['open'] < row['close'] and bitcoins > 0:  
+                cash_test = bitcoins * open
+                cash_test = cash_test - (.25 * cash / 100)
+                logger.info('SELL')
+                bitcoins = 0
+                cash = cash_test
+
+    if cash == 0:
+        cash = bitcoins * last_bitcoin
+
+    from_date = datetime.fromtimestamp(df[0:1]['time'].values).strftime('%Y-%m-%d %H:%M:%S')
+    to_date = datetime.fromtimestamp(df[-1:]['time'].values).strftime('%Y-%m-%d %H:%M:%S')
+    logger.info("TEST From %s to %s" % (from_date, to_date))
+
+    logger.info("With prediction %.2f euros" % (cash))
+
+    bitcoin_first = 1000 / df[0:1]['open'].values
+    cash_last = bitcoin_first * float(df[-1:]['open'].values)
+    logger.info("Without prediction %.2f euros" % cash_last)
