@@ -1,9 +1,9 @@
 from gdax import AuthenticatedClient
 from .log import logger
 
-gdax_key = '4823e9f74b40090a2995b96cd7a22cb6'
-gdax_secret = '95nGkm6XklHwCfGgJ+krvnwBTXk1NO02QZWbjJ4Aasn6EKGaWMYTkyjAIbhrvhiWJ/ZJY/MsCsWRI/wyZV5r7Q=='
-gdax_passphrase = '34hpnoe3zhp'
+gdax_key = ''
+gdax_secret = ''
+gdax_passphrase = ''
 
 
 class GdaxClient(AuthenticatedClient):
